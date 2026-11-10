@@ -3,3 +3,4 @@ results/*.nii.gz
 __pycache__/
 .venv/
 .DS_Store
+HANDOFF*.md

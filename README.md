@@ -53,22 +53,19 @@ Subject `sub-0035`. Fixed image: 64 mT T2. Moving image: 3T T1.
 [jacobstoelting.github.io/mri_lowfield_registration](https://jacobstoelting.github.io/mri_lowfield_registration/)
 (built on [NiiVue](https://github.com/niivue/niivue), source in `docs/`)
 
-- Axial, coronal, sagittal and a rotatable 3D view at once.
-- Green = 64 mT scan, magenta = 3T scan. Where both are bright they add up to gray/white.
-- **Before / After / Flicker** move the 64 mT scan between its starting position and the
-  registered one. **64 mT** and **3T** buttons (keys 1 and 2) turn each scan on or off;
-  the sliders set opacity.
-
-How to read it:
-
-- **Judge alignment by edges, not color.** T1 and T2 show tissue almost oppositely (fluid is
-  dark on T1 and bright on T2), so brain tissue looks magenta and the ventricles look green
-  even when the alignment is perfect. Check that the outlines of the skull, brain and
-  ventricles sit on top of each other, or use Flicker and watch what jumps.
+- **Side by side, linked.** The 64 mT scan on the left and the 3T scan on the right, both in
+  grayscale. Clicking, scrolling, zooming or rotating in one view does the same in the
+  other, so the crosshair always points at the same anatomy in both. That is what the
+  registration makes possible.
+- **3T outlines (yellow)** on the 64 mT scan show the alignment. They are edges of the 3T
+  scan (3D Canny), and edges work across contrasts even though T1 and T2 show tissue almost
+  oppositely (fluid is dark on T1 and bright on T2). In **After** they trace the 64 mT
+  ventricles, brain and skull; in **Before** they visibly miss. **Flicker** alternates the
+  two. Toggle the outlines with the button or the O key.
 - **The blockiness is real.** The 64 mT scan is shown exactly as recorded: 5 mm slices,
   which look like stair-steps in the coronal and sagittal views. It is moved into place by
   rewriting its file header (position and orientation), not by resampling, so nothing is
-  smoothed or invented. The display grid is the 1 mm 3T scan, so the 3T stays sharp.
+  smoothed or invented. Both views draw on the 1 mm 3T grid, so the 3T stays sharp.
 
 ## How it works (`register.py`)
 
@@ -128,7 +125,7 @@ top of `register.py`.
 | `download_data.py` | Downloads and unpacks the Zenodo dataset into `data/` |
 | `register.py` | Loads, cleans and registers the scans; self-consistency test; writes `results/` |
 | `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
-| `export_viewer.py` | Writes the 3 scans the viewer loads to `docs/data/` |
+| `export_viewer.py` | Writes the scans and 3T outlines the viewer loads to `docs/data/` |
 | `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
 | `results/` | Figures, `results.json`, and the transform `t1_to_lowfield.tfm` |
 

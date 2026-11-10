@@ -7,6 +7,7 @@ Run from the repo root after `python register.py`:
 
 Writes to docs/data/ (uint8, 0-255, so they load fast):
     t1_3t.nii.gz            3T T1 on its 1 mm grid, cropped to the head: the sharp reference
+    t1_3t_edges.nii.gz      outlines of the 3T T1 (3D Canny edges), same grid, 0 or 255
     lowfield_before.nii.gz  64 mT scan, image centers lined up (no rotation)
     lowfield_after.nii.gz   64 mT scan, moved by the registration result
     results.json            copy of results/results.json (shown on the page)
@@ -25,6 +26,11 @@ from register import OUT, initial_transform, load_3t_t1, load_lowfield, normaliz
 
 DOCS_DATA = Path("docs") / "data"
 CROP_MARGIN_MM = 6
+# Canny settings for the 3T outlines: smoothing variance (mm^2) and low/high gradient
+# thresholds on the 0-1 normalized T1. Picked by eye to keep the head and brain surface and
+# the ventricles without outlining every fold.
+EDGE_VARIANCE_MM2 = 2.0
+EDGE_THRESHOLDS = (0.08, 0.18)
 
 
 def to_uint8(img):
@@ -54,6 +60,14 @@ def relocate(img, tf):
     return out
 
 
+def outlines(img):
+    """Edges of the 3T scan as a 0/255 mask. Edges work across contrasts: a T1 outline should
+    trace the same boundary in the T2 scan when the two are aligned, even though the tissue
+    brightness is completely different."""
+    edges = sitk.CannyEdgeDetection(normalize(img), *EDGE_THRESHOLDS, [EDGE_VARIANCE_MM2] * 3)
+    return sitk.Cast(edges > 0, sitk.sitkUInt8) * 255
+
+
 def crop_to_head(img, margin_mm):
     """Crop to the bounding box of the nonzero (masked) head, plus a margin."""
     stats = sitk.LabelShapeStatisticsImageFilter()
@@ -78,14 +92,17 @@ def main():
     # computed on the uncropped T1, because cropping moves the image center.
     before = as_euler(initial_transform(normalize(low), normalize(t1), "GEOMETRY"))
 
+    t1_crop = crop_to_head(t1, CROP_MARGIN_MM)
     outputs = {
-        "t1_3t": crop_to_head(t1, CROP_MARGIN_MM),
+        "t1_3t": t1_crop,
+        "t1_3t_edges": outlines(t1_crop),
         "lowfield_before": relocate(low, before),
         "lowfield_after": relocate(low, after),
     }
     for name, img in outputs.items():
         out = DOCS_DATA / f"{name}.nii.gz"
-        sitk.WriteImage(to_uint8(img), str(out), useCompression=True)
+        data = img if name == "t1_3t_edges" else to_uint8(img)
+        sitk.WriteImage(data, str(out), useCompression=True)
         print(f"wrote {out}  {img.GetSize()} @ {tuple(round(s, 2) for s in img.GetSpacing())} mm"
               f"  ({out.stat().st_size / 1e6:.2f} MB)")
 

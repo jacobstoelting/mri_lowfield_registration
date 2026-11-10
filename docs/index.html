@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Real 64 mT vs 3T MRI registration viewer</title>
 <style>
-  :root { --bg: #111; --panel: #1c1c1c; --text: #ddd; --muted: #999; --accent: #c0f; }
+  :root { --bg: #111; --panel: #1c1c1c; --text: #ddd; --muted: #999; --edge: #ffd400; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
                font: 14px/1.4 system-ui, -apple-system, sans-serif; }
@@ -17,14 +17,18 @@
   .group > span { color: var(--muted); }
   button { background: #2a2a2a; color: var(--text); border: 1px solid #444; border-radius: 4px;
            padding: 4px 10px; cursor: pointer; font: inherit; }
-  button.on { background: #444; border-color: #888; }
-  select, input[type=range] { font: inherit; }
-  main { flex: 1; position: relative; min-height: 0; }
+  button.on { background: #555; border-color: #aaa; color: #fff; }
+  select { font: inherit; }
+  main { flex: 1; display: flex; gap: 4px; min-height: 0; }
+  .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .pane h2 { margin: 0; padding: 5px 10px; font-size: 13px; font-weight: 600; background: #181818; }
+  .pane h2 small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+  .pane .wrap { flex: 1; position: relative; min-height: 0; }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   footer { padding: 6px 14px; background: var(--panel); color: var(--muted); display: flex;
            flex-wrap: wrap; gap: 18px; font-variant-numeric: tabular-nums; }
   footer b { color: var(--text); font-weight: 600; }
-  #legend .g { color: #3f3; } #legend .m { color: #f3f; }
+  .edge { color: var(--edge); }
 </style>
 </head>
 <body>
@@ -32,25 +36,21 @@
   <h1>64 mT vs 3T</h1>
 
   <div class="group">
-    <span>64 mT:</span>
+    <span>64 mT position:</span>
     <button id="btnBefore">Before</button>
     <button id="btnAfter" class="on">After</button>
     <button id="btnFlicker" title="Alternate before/after every 0.6 s">Flicker</button>
   </div>
 
   <div class="group">
-    <span>Show:</span>
-    <button id="btnLow" class="on" title="Turn the 64 mT scan on/off (key: 1)">64 mT</button>
-    <input id="opLow" type="range" min="0" max="100" value="100" title="64 mT opacity">
-    <button id="btnT1" class="on" title="Turn the 3T scan on/off (key: 2)">3T</button>
-    <input id="opT1" type="range" min="0" max="100" value="100" title="3T opacity">
+    <button id="btnEdges" class="on" title="3T outlines on the 64 mT scan (key: O)">3T outlines</button>
   </div>
 
   <div class="group">
     <span>View</span>
     <select id="view">
-      <option value="mpr3d">All 3 planes + 3D</option>
-      <option value="mpr">All 3 planes</option>
+      <option value="mpr3d">3 planes + 3D (3T)</option>
+      <option value="mpr">3 planes</option>
       <option value="0">Axial</option>
       <option value="1">Coronal</option>
       <option value="2">Sagittal</option>
@@ -58,13 +58,22 @@
     </select>
   </div>
 
-  <div class="group" id="legend">
-    <span class="g">■ 64 mT T2 (Hyperfine)</span><span class="m">■ 3T T1 (1 mm)</span>
-    <span>gray/white = both agree</span>
+  <div class="group">
+    <span>The views are linked: click, scroll or rotate in either one.
+      <span class="edge">Yellow lines</span> = edges of the 3T scan.</span>
   </div>
 </header>
 
-<main><canvas id="gl"></canvas></main>
+<main>
+  <section class="pane">
+    <h2>64 mT T2 <small>Hyperfine Swoop · 1.6 × 1.6 × 5 mm voxels</small></h2>
+    <div class="wrap"><canvas id="glLow"></canvas></div>
+  </section>
+  <section class="pane">
+    <h2>3T T1 <small>Philips Achieva · 1 mm voxels</small></h2>
+    <div class="wrap"><canvas id="glT1"></canvas></div>
+  </section>
+</main>
 
 <footer>
   <span id="status">Loading…</span>
@@ -75,39 +84,44 @@
 <script type="module">
 import { Niivue, SLICE_TYPE, SHOW_RENDER } from "https://cdn.jsdelivr.net/npm/@niivue/niivue@0.69.0/dist/index.js";
 
-// Volume 0 is an all-black copy of the 3T T1 used only as the base layer. Two reasons:
-// (1) NiiVue draws everything on the base volume's voxel grid, so the base must be the fine
-//     1 mm T1, not the coarse 64 mT scan; (2) NiiVue blends overlays additively with each
-//     other but draws them *over* the base, so every visible image is loaded as an overlay.
-// The two 64 mT files hold the same voxels; only their headers (position/orientation) differ.
-const BASE = 0, T1 = 1, BEFORE = 2, AFTER = 3;   // volume indices, in load order
 const $ = (id) => document.getElementById(id);
 
-const nv = new Niivue({
+// Left view: 64 mT scan in gray with the 3T outlines on top.
+// NiiVue draws everything on the voxel grid of the first (base) volume, so the base is an
+// all-black copy of the 1 mm 3T scan. That keeps the outlines sharp and puts both views on
+// the same grid, so their crosshairs line up exactly. The two 64 mT files hold the same
+// voxels; only their headers (position/orientation) differ.
+const BASE = 0, BEFORE = 1, AFTER = 2, EDGES = 3;   // volume indices in the left view
+const MULTIPLANAR_GRID = 2;                          // NiiVue MULTIPLANAR_TYPE.GRID
+
+const opts = {
   backColor: [0.07, 0.07, 0.07, 1],
   show3Dcrosshair: true,
   isOrientCube: true,
   multiplanarShowRender: SHOW_RENDER.ALWAYS,
-  crosshairColor: [1, 1, 0, 0.6],
-});
+  crosshairColor: [0.2, 0.8, 1, 0.7],
+};
+const nvLow = new Niivue(opts);
+const nvT1 = new Niivue(opts);
+window.viewer = { nvLow, nvT1 };   // handy for poking at from the browser console
 
-// Fully opaque single-hue colormaps so additive blending gives exactly green + magenta = white.
 const ramp = (r, g, b) => ({ R: [0, r], G: [0, g], B: [0, b], A: [0, 255], I: [0, 255] });
-nv.addColormap("lf_green", ramp(0, 255, 0));
-nv.addColormap("t1_magenta", ramp(255, 0, 255));
-nv.addColormap("black", ramp(0, 0, 0));
+for (const nv of [nvLow, nvT1]) {
+  nv.addColormap("black", ramp(0, 0, 0));
+  nv.addColormap("white", ramp(255, 255, 255));   // gray ramp that is transparent at 0
+  nv.addColormap("edge", { R: [0, 255], G: [0, 212], B: [0, 0], A: [0, 255], I: [0, 255] });
+}
 
-let showAfter = true, flickerTimer = null, lowOn = true, t1On = true;
+let showAfter = true, edgesOn = true, flickerTimer = null;
 
 function applyVisibility() {
-  const op = lowOn ? $("opLow").value / 100 : 0;
-  nv.setOpacity(T1, t1On ? $("opT1").value / 100 : 0);
-  nv.setOpacity(BEFORE, showAfter ? 0 : op);
-  nv.setOpacity(AFTER, showAfter ? op : 0);
+  nvLow.setOpacity(BEFORE, showAfter ? 0 : 1);
+  nvLow.setOpacity(AFTER, showAfter ? 1 : 0);
+  // In 3D the outlines become a cluttered yellow skin, so they only show on the 2D slices.
+  nvLow.setOpacity(EDGES, edgesOn && $("view").value !== "4" ? 1 : 0);
   $("btnBefore").classList.toggle("on", !showAfter);
   $("btnAfter").classList.toggle("on", showAfter);
-  $("btnLow").classList.toggle("on", lowOn);
-  $("btnT1").classList.toggle("on", t1On);
+  $("btnEdges").classList.toggle("on", edgesOn);
 }
 
 function setShowAfter(v) { showAfter = v; applyVisibility(); }
@@ -119,12 +133,18 @@ function stopFlicker() {
 
 function applyView() {
   const v = $("view").value;
-  if (v === "mpr3d" || v === "mpr") {
-    nv.opts.multiplanarShowRender = v === "mpr3d" ? SHOW_RENDER.ALWAYS : SHOW_RENDER.NEVER;
-    nv.setSliceType(SLICE_TYPE.MULTIPLANAR);
-  } else {
-    nv.setSliceType(Number(v));
+  for (const nv of [nvLow, nvT1]) {
+    nv.setMultiplanarLayout(MULTIPLANAR_GRID);   // same 2x2 layout in both, so planes line up
+    if (v === "mpr3d" || v === "mpr") {
+      // "3 planes + 3D" shows the 3D render only on the 3T side (see applyVisibility)
+      const render = v === "mpr3d" && nv === nvT1;
+      nv.opts.multiplanarShowRender = render ? SHOW_RENDER.ALWAYS : SHOW_RENDER.NEVER;
+      nv.setSliceType(SLICE_TYPE.MULTIPLANAR);
+    } else {
+      nv.setSliceType(Number(v));
+    }
   }
+  applyVisibility();
 }
 
 $("btnBefore").onclick = () => { stopFlicker(); setShowAfter(false); };
@@ -134,37 +154,42 @@ $("btnFlicker").onclick = () => {
   $("btnFlicker").classList.add("on");
   flickerTimer = setInterval(() => setShowAfter(!showAfter), 600);
 };
-$("btnLow").onclick = () => { lowOn = !lowOn; applyVisibility(); };
-$("btnT1").onclick = () => { t1On = !t1On; applyVisibility(); };
-// Keyboard shortcuts: 1 = 64 mT on/off, 2 = 3T on/off
-document.addEventListener("keydown", (e) => {
-  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
-  if (e.key === "1") $("btnLow").click();
-  if (e.key === "2") $("btnT1").click();
-});
-$("opLow").oninput = applyVisibility;
-$("opT1").oninput = applyVisibility;
+$("btnEdges").onclick = () => { edgesOn = !edgesOn; applyVisibility(); };
 $("view").onchange = applyView;
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "SELECT") return;
+  if (e.key === "o" || e.key === "O") $("btnEdges").click();
+});
 
-nv.onLocationChange = (data) => { $("loc").textContent = data.string ?? ""; };
+const showLoc = (data) => { $("loc").textContent = data.string ?? ""; };
+nvLow.onLocationChange = showLoc;
+nvT1.onLocationChange = showLoc;
 
 async function main() {
-  await nv.attachToCanvas($("gl"));
-  await nv.loadVolumes([
-    { url: "data/t1_3t.nii.gz",           name: "t1_3t.nii.gz",           colormap: "black", cal_min: 20, cal_max: 255 },
-    { url: "data/t1_3t.nii.gz",           name: "t1_3t.nii.gz",           colormap: "t1_magenta", cal_min: 0, cal_max: 255 },
-    { url: "data/lowfield_before.nii.gz", name: "lowfield_before.nii.gz", colormap: "lf_green",   cal_min: 0, cal_max: 255 },
-    { url: "data/lowfield_after.nii.gz",  name: "lowfield_after.nii.gz",  colormap: "lf_green",   cal_min: 0, cal_max: 255 },
+  await nvLow.attachToCanvas($("glLow"));
+  await nvT1.attachToCanvas($("glT1"));
+  await Promise.all([
+    nvLow.loadVolumes([
+      { url: "data/t1_3t.nii.gz",           name: "t1_3t.nii.gz",           colormap: "black", cal_min: 20, cal_max: 255 },
+      { url: "data/lowfield_before.nii.gz", name: "lowfield_before.nii.gz", colormap: "white", cal_min: 0,  cal_max: 255 },
+      { url: "data/lowfield_after.nii.gz",  name: "lowfield_after.nii.gz",  colormap: "white", cal_min: 0,  cal_max: 255 },
+      { url: "data/t1_3t_edges.nii.gz",     name: "t1_3t_edges.nii.gz",     colormap: "edge",  cal_min: 0,  cal_max: 255 },
+    ]),
+    nvT1.loadVolumes([
+      { url: "data/t1_3t.nii.gz", name: "t1_3t.nii.gz", colormap: "gray", cal_min: 0, cal_max: 255 },
+    ]),
   ]);
-  // Optional URL settings, e.g. index.html?lf=before&view=2&hide=3t  (hide: 64mt or 3t)
+
+  // Link the two views both ways: crosshair, slice, zoom/pan and 3D rotation follow each other.
+  const sync = { "2d": true, "3d": true, crosshair: true, zoomPan: true, sliceType: true };
+  nvLow.broadcastTo(nvT1, sync);
+  nvT1.broadcastTo(nvLow, sync);
+
+  // Optional URL settings, e.g. index.html?lf=before&view=2&outlines=0
   const q = new URLSearchParams(location.search);
   if (q.has("view")) $("view").value = q.get("view");
   showAfter = q.get("lf") !== "before";
-  for (const h of (q.get("hide") ?? "").split(",")) {
-    if (h === "64mt") lowOn = false;
-    if (h === "3t") t1On = false;
-  }
-  nv.setAdditiveBlend(true);   // green + magenta add up to gray/white where both scans are bright
+  edgesOn = q.get("outlines") !== "0";
   applyVisibility();
   applyView();
   $("status").textContent = "Click to move the crosshair · scroll to change slice · drag in 3D to rotate";
