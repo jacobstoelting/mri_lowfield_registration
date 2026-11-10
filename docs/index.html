@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Low-field vs 3T T1 registration viewer</title>
+<style>
+  :root { --bg: #111; --panel: #1c1c1c; --text: #ddd; --muted: #999; --accent: #c0f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+               font: 14px/1.4 system-ui, -apple-system, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  header { padding: 10px 14px; background: var(--panel); display: flex; flex-wrap: wrap;
+           gap: 18px; align-items: center; }
+  header h1 { font-size: 16px; margin: 0 8px 0 0; font-weight: 600; }
+  .group { display: flex; gap: 6px; align-items: center; }
+  .group > span { color: var(--muted); }
+  button { background: #2a2a2a; color: var(--text); border: 1px solid #444; border-radius: 4px;
+           padding: 4px 10px; cursor: pointer; font: inherit; }
+  button.on { background: #444; border-color: #888; }
+  select, input[type=range] { font: inherit; }
+  main { flex: 1; position: relative; min-height: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  footer { padding: 6px 14px; background: var(--panel); color: var(--muted); display: flex;
+           flex-wrap: wrap; gap: 18px; font-variant-numeric: tabular-nums; }
+  footer b { color: var(--text); font-weight: 600; }
+  #legend .g { color: #3f3; } #legend .m { color: #f3f; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Low-field vs 3T T1</h1>
+
+  <div class="group">
+    <span>T1:</span>
+    <button id="btnBefore">Before</button>
+    <button id="btnAfter" class="on">After</button>
+    <button id="btnFlicker" title="Alternate before/after every 0.6 s">Flicker</button>
+  </div>
+
+  <div class="group">
+    <span>T1 opacity</span>
+    <input id="opacity" type="range" min="0" max="100" value="100">
+  </div>
+
+  <div class="group">
+    <span>View</span>
+    <select id="view">
+      <option value="mpr3d">All 3 planes + 3D</option>
+      <option value="mpr">All 3 planes</option>
+      <option value="0">Axial</option>
+      <option value="1">Coronal</option>
+      <option value="2">Sagittal</option>
+      <option value="4">3D render</option>
+    </select>
+  </div>
+
+  <div class="group" id="legend">
+    <span class="g">■ low-field</span><span class="m">■ 3T T1</span>
+    <span>gray/white = both agree</span>
+  </div>
+</header>
+
+<main><canvas id="gl"></canvas></main>
+
+<footer>
+  <span id="status">Loading…</span>
+  <span id="loc"></span>
+  <span id="stats"></span>
+</footer>
+
+<script type="module">
+import { Niivue, SLICE_TYPE, SHOW_RENDER } from "https://cdn.jsdelivr.net/npm/@niivue/niivue@0.69.0/dist/index.js";
+
+// Volume 0 is an all-black copy of the low-field scan used only as the base layer: NiiVue
+// blends overlays additively with each other but draws them *over* the base, so every
+// visible image is loaded as an overlay.
+const BASE = 0, LOW = 1, BEFORE = 2, AFTER = 3;   // volume indices, in load order
+const $ = (id) => document.getElementById(id);
+
+const nv = new Niivue({
+  backColor: [0.07, 0.07, 0.07, 1],
+  show3Dcrosshair: true,
+  isOrientCube: true,
+  multiplanarShowRender: SHOW_RENDER.ALWAYS,
+  crosshairColor: [1, 1, 0, 0.6],
+});
+
+// Fully opaque single-hue colormaps so additive blending gives exactly green + magenta = white.
+const ramp = (r, g, b) => ({ R: [0, r], G: [0, g], B: [0, b], A: [0, 255], I: [0, 255] });
+nv.addColormap("lf_green", ramp(0, 255, 0));
+nv.addColormap("t1_magenta", ramp(255, 0, 255));
+nv.addColormap("black", ramp(0, 0, 0));
+
+let showAfter = true, flickerTimer = null;
+
+function applyT1Visibility() {
+  const op = $("opacity").value / 100;
+  nv.setOpacity(BEFORE, showAfter ? 0 : op);
+  nv.setOpacity(AFTER, showAfter ? op : 0);
+  $("btnBefore").classList.toggle("on", !showAfter);
+  $("btnAfter").classList.toggle("on", showAfter);
+}
+
+function setShowAfter(v) { showAfter = v; applyT1Visibility(); }
+
+function stopFlicker() {
+  clearInterval(flickerTimer); flickerTimer = null;
+  $("btnFlicker").classList.remove("on");
+}
+
+function applyView() {
+  const v = $("view").value;
+  if (v === "mpr3d" || v === "mpr") {
+    nv.opts.multiplanarShowRender = v === "mpr3d" ? SHOW_RENDER.ALWAYS : SHOW_RENDER.NEVER;
+    nv.setSliceType(SLICE_TYPE.MULTIPLANAR);
+  } else {
+    nv.setSliceType(Number(v));
+  }
+}
+
+$("btnBefore").onclick = () => { stopFlicker(); setShowAfter(false); };
+$("btnAfter").onclick  = () => { stopFlicker(); setShowAfter(true); };
+$("btnFlicker").onclick = () => {
+  if (flickerTimer) return stopFlicker();
+  $("btnFlicker").classList.add("on");
+  flickerTimer = setInterval(() => setShowAfter(!showAfter), 600);
+};
+$("opacity").oninput = applyT1Visibility;
+$("view").onchange = applyView;
+
+nv.onLocationChange = (data) => { $("loc").textContent = data.string ?? ""; };
+
+async function main() {
+  await nv.attachToCanvas($("gl"));
+  await nv.loadVolumes([
+    { url: "data/lowfield.nii.gz",  name: "lowfield.nii.gz", colormap: "black", cal_min: 45, cal_max: 255 },
+    { url: "data/lowfield.nii.gz",  name: "lowfield.nii.gz",  colormap: "lf_green",   cal_min: 0, cal_max: 255 },
+    { url: "data/t1_before.nii.gz", name: "t1_before.nii.gz", colormap: "t1_magenta", cal_min: 0, cal_max: 255 },
+    { url: "data/t1_after.nii.gz",  name: "t1_after.nii.gz",  colormap: "t1_magenta", cal_min: 0, cal_max: 255 },
+  ]);
+  // Optional URL settings, e.g. index.html?t1=before&view=2
+  const q = new URLSearchParams(location.search);
+  if (q.has("view")) $("view").value = q.get("view");
+  showAfter = q.get("t1") !== "before";
+  nv.setAdditiveBlend(true);   // green + magenta add up to gray/white where both scans are bright
+  applyT1Visibility();
+  applyView();
+  $("status").textContent = "Click to move the crosshair · scroll to change slice · drag in 3D to rotate";
+
+  try {
+    const r = await (await fetch("data/results.json")).json();
+    $("stats").innerHTML =
+      `Mean error <b>${r.mean_error_mm.before} → ${r.mean_error_mm.after} mm</b> · ` +
+      `max <b>${r.max_error_mm.before} → ${r.max_error_mm.after} mm</b> · ` +
+      `MI <b>${r.mutual_information.before} → ${r.mutual_information.after}</b>`;
+  } catch { /* stats are optional */ }
+}
+
+main().catch((err) => {
+  console.error(err);
+  $("status").textContent = "Failed to load volumes. Serve this folder over HTTP " +
+    "(python -m http.server -d docs 8000), don't open the file directly.";
+});
+</script>
+</body>
+</html>

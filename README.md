@@ -68,6 +68,17 @@ python register.py        # about 30 seconds
 Outputs go to `results/`: the overlay and checkerboard images, the optimizer curve,
 `results.json`, the transform (`t1_to_lowfield.tfm`), and the aligned T1 as NIfTI.
 
+## 3D viewer
+
+A browser viewer built on [NiiVue](https://github.com/niivue/niivue) shows the low-field scan
+(green) and the 3T T1 (magenta) in axial, coronal, sagittal and 3D at once, with a
+before/after toggle. Where the scans agree, green + magenta add up to gray/white.
+
+```bash
+python export_viewer.py                  # writes docs/data/
+python -m http.server -d docs 8000       # open http://localhost:8000
+```
+
 ## Limits
 
 - The low-field scan is simulated from a 3T FLAIR, not taken on a real low-field scanner.
