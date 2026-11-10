@@ -39,9 +39,10 @@
   </div>
 
   <div class="group">
-    <span>64 mT</span>
+    <span>Show:</span>
+    <button id="btnLow" class="on" title="Turn the 64 mT scan on/off (key: 1)">64 mT</button>
     <input id="opLow" type="range" min="0" max="100" value="100" title="64 mT opacity">
-    <span>3T</span>
+    <button id="btnT1" class="on" title="Turn the 3T scan on/off (key: 2)">3T</button>
     <input id="opT1" type="range" min="0" max="100" value="100" title="3T opacity">
   </div>
 
@@ -96,15 +97,17 @@ nv.addColormap("lf_green", ramp(0, 255, 0));
 nv.addColormap("t1_magenta", ramp(255, 0, 255));
 nv.addColormap("black", ramp(0, 0, 0));
 
-let showAfter = true, flickerTimer = null;
+let showAfter = true, flickerTimer = null, lowOn = true, t1On = true;
 
 function applyVisibility() {
-  const op = $("opLow").value / 100;
-  nv.setOpacity(T1, $("opT1").value / 100);
+  const op = lowOn ? $("opLow").value / 100 : 0;
+  nv.setOpacity(T1, t1On ? $("opT1").value / 100 : 0);
   nv.setOpacity(BEFORE, showAfter ? 0 : op);
   nv.setOpacity(AFTER, showAfter ? op : 0);
   $("btnBefore").classList.toggle("on", !showAfter);
   $("btnAfter").classList.toggle("on", showAfter);
+  $("btnLow").classList.toggle("on", lowOn);
+  $("btnT1").classList.toggle("on", t1On);
 }
 
 function setShowAfter(v) { showAfter = v; applyVisibility(); }
@@ -131,6 +134,14 @@ $("btnFlicker").onclick = () => {
   $("btnFlicker").classList.add("on");
   flickerTimer = setInterval(() => setShowAfter(!showAfter), 600);
 };
+$("btnLow").onclick = () => { lowOn = !lowOn; applyVisibility(); };
+$("btnT1").onclick = () => { t1On = !t1On; applyVisibility(); };
+// Keyboard shortcuts: 1 = 64 mT on/off, 2 = 3T on/off
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (e.key === "1") $("btnLow").click();
+  if (e.key === "2") $("btnT1").click();
+});
 $("opLow").oninput = applyVisibility;
 $("opT1").oninput = applyVisibility;
 $("view").onchange = applyView;
@@ -145,10 +156,14 @@ async function main() {
     { url: "data/lowfield_before.nii.gz", name: "lowfield_before.nii.gz", colormap: "lf_green",   cal_min: 0, cal_max: 255 },
     { url: "data/lowfield_after.nii.gz",  name: "lowfield_after.nii.gz",  colormap: "lf_green",   cal_min: 0, cal_max: 255 },
   ]);
-  // Optional URL settings, e.g. index.html?lf=before&view=2
+  // Optional URL settings, e.g. index.html?lf=before&view=2&hide=3t  (hide: 64mt or 3t)
   const q = new URLSearchParams(location.search);
   if (q.has("view")) $("view").value = q.get("view");
   showAfter = q.get("lf") !== "before";
+  for (const h of (q.get("hide") ?? "").split(",")) {
+    if (h === "64mt") lowOn = false;
+    if (h === "3t") t1On = false;
+  }
   nv.setAdditiveBlend(true);   // green + magenta add up to gray/white where both scans are bright
   applyVisibility();
   applyView();
