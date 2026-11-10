@@ -53,10 +53,12 @@ def save_figures(fixed, moving, before_tf, after_tf, history, results, out):
             ax[r, c].imshow(np.clip(rgb, 0, 1))
             ax[r, c].set_title(f"{name}: {view}")
             ax[r, c].axis("off")
-    mi, err = results["mutual_information"], results["mean_error_mm"]
-    fig.suptitle(f"Red = simulated low-field FLAIR, green = 3T T1 (yellow where both are bright)\n"
-                 f"Mutual information {mi['before']} -> {mi['after']}   |   "
-                 f"mean error {err['before']} mm -> {err['after']} mm")
+    mi = results["mutual_information"]
+    sc = results["self_consistency"]["mean_error_mm"]
+    fig.suptitle(f"{results['subject']}: red = {results['fixed']}, green = {results['moving']} "
+                 f"(yellow where both are bright)\n"
+                 f"Before = image centers lined up.  Mutual information {mi['before']} -> {mi['after']}"
+                 f"   |   self-consistency error {sc['after']} mm")
     fig.tight_layout()
     fig.savefig(out / "overlay_before_after.png", dpi=110)
     plt.close(fig)

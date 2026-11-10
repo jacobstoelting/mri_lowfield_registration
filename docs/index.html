@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Low-field vs 3T T1 registration viewer</title>
+<title>Real 64 mT vs 3T MRI registration viewer</title>
 <style>
   :root { --bg: #111; --panel: #1c1c1c; --text: #ddd; --muted: #999; --accent: #c0f; }
   * { box-sizing: border-box; }
@@ -29,18 +29,20 @@
 </head>
 <body>
 <header>
-  <h1>Low-field vs 3T T1</h1>
+  <h1>64 mT vs 3T</h1>
 
   <div class="group">
-    <span>T1:</span>
+    <span>64 mT:</span>
     <button id="btnBefore">Before</button>
     <button id="btnAfter" class="on">After</button>
     <button id="btnFlicker" title="Alternate before/after every 0.6 s">Flicker</button>
   </div>
 
   <div class="group">
-    <span>T1 opacity</span>
-    <input id="opacity" type="range" min="0" max="100" value="100">
+    <span>64 mT</span>
+    <input id="opLow" type="range" min="0" max="100" value="100" title="64 mT opacity">
+    <span>3T</span>
+    <input id="opT1" type="range" min="0" max="100" value="100" title="3T opacity">
   </div>
 
   <div class="group">
@@ -56,7 +58,7 @@
   </div>
 
   <div class="group" id="legend">
-    <span class="g">■ low-field</span><span class="m">■ 3T T1</span>
+    <span class="g">■ 64 mT T2 (Hyperfine)</span><span class="m">■ 3T T1 (1 mm)</span>
     <span>gray/white = both agree</span>
   </div>
 </header>
@@ -72,10 +74,12 @@
 <script type="module">
 import { Niivue, SLICE_TYPE, SHOW_RENDER } from "https://cdn.jsdelivr.net/npm/@niivue/niivue@0.69.0/dist/index.js";
 
-// Volume 0 is an all-black copy of the low-field scan used only as the base layer: NiiVue
-// blends overlays additively with each other but draws them *over* the base, so every
-// visible image is loaded as an overlay.
-const BASE = 0, LOW = 1, BEFORE = 2, AFTER = 3;   // volume indices, in load order
+// Volume 0 is an all-black copy of the 3T T1 used only as the base layer. Two reasons:
+// (1) NiiVue draws everything on the base volume's voxel grid, so the base must be the fine
+//     1 mm T1, not the coarse 64 mT scan; (2) NiiVue blends overlays additively with each
+//     other but draws them *over* the base, so every visible image is loaded as an overlay.
+// The two 64 mT files hold the same voxels; only their headers (position/orientation) differ.
+const BASE = 0, T1 = 1, BEFORE = 2, AFTER = 3;   // volume indices, in load order
 const $ = (id) => document.getElementById(id);
 
 const nv = new Niivue({
@@ -94,15 +98,16 @@ nv.addColormap("black", ramp(0, 0, 0));
 
 let showAfter = true, flickerTimer = null;
 
-function applyT1Visibility() {
-  const op = $("opacity").value / 100;
+function applyVisibility() {
+  const op = $("opLow").value / 100;
+  nv.setOpacity(T1, $("opT1").value / 100);
   nv.setOpacity(BEFORE, showAfter ? 0 : op);
   nv.setOpacity(AFTER, showAfter ? op : 0);
   $("btnBefore").classList.toggle("on", !showAfter);
   $("btnAfter").classList.toggle("on", showAfter);
 }
 
-function setShowAfter(v) { showAfter = v; applyT1Visibility(); }
+function setShowAfter(v) { showAfter = v; applyVisibility(); }
 
 function stopFlicker() {
   clearInterval(flickerTimer); flickerTimer = null;
@@ -126,7 +131,8 @@ $("btnFlicker").onclick = () => {
   $("btnFlicker").classList.add("on");
   flickerTimer = setInterval(() => setShowAfter(!showAfter), 600);
 };
-$("opacity").oninput = applyT1Visibility;
+$("opLow").oninput = applyVisibility;
+$("opT1").oninput = applyVisibility;
 $("view").onchange = applyView;
 
 nv.onLocationChange = (data) => { $("loc").textContent = data.string ?? ""; };
@@ -134,26 +140,27 @@ nv.onLocationChange = (data) => { $("loc").textContent = data.string ?? ""; };
 async function main() {
   await nv.attachToCanvas($("gl"));
   await nv.loadVolumes([
-    { url: "data/lowfield.nii.gz",  name: "lowfield.nii.gz", colormap: "black", cal_min: 45, cal_max: 255 },
-    { url: "data/lowfield.nii.gz",  name: "lowfield.nii.gz",  colormap: "lf_green",   cal_min: 0, cal_max: 255 },
-    { url: "data/t1_before.nii.gz", name: "t1_before.nii.gz", colormap: "t1_magenta", cal_min: 0, cal_max: 255 },
-    { url: "data/t1_after.nii.gz",  name: "t1_after.nii.gz",  colormap: "t1_magenta", cal_min: 0, cal_max: 255 },
+    { url: "data/t1_3t.nii.gz",           name: "t1_3t.nii.gz",           colormap: "black", cal_min: 20, cal_max: 255 },
+    { url: "data/t1_3t.nii.gz",           name: "t1_3t.nii.gz",           colormap: "t1_magenta", cal_min: 0, cal_max: 255 },
+    { url: "data/lowfield_before.nii.gz", name: "lowfield_before.nii.gz", colormap: "lf_green",   cal_min: 0, cal_max: 255 },
+    { url: "data/lowfield_after.nii.gz",  name: "lowfield_after.nii.gz",  colormap: "lf_green",   cal_min: 0, cal_max: 255 },
   ]);
-  // Optional URL settings, e.g. index.html?t1=before&view=2
+  // Optional URL settings, e.g. index.html?lf=before&view=2
   const q = new URLSearchParams(location.search);
   if (q.has("view")) $("view").value = q.get("view");
-  showAfter = q.get("t1") !== "before";
+  showAfter = q.get("lf") !== "before";
   nv.setAdditiveBlend(true);   // green + magenta add up to gray/white where both scans are bright
-  applyT1Visibility();
+  applyVisibility();
   applyView();
   $("status").textContent = "Click to move the crosshair · scroll to change slice · drag in 3D to rotate";
 
   try {
     const r = await (await fetch("data/results.json")).json();
+    const sc = r.self_consistency;
     $("stats").innerHTML =
-      `Mean error <b>${r.mean_error_mm.before} → ${r.mean_error_mm.after} mm</b> · ` +
-      `max <b>${r.max_error_mm.before} → ${r.max_error_mm.after} mm</b> · ` +
-      `MI <b>${r.mutual_information.before} → ${r.mutual_information.after}</b>`;
+      `${r.subject} · MI <b>${r.mutual_information.before} → ${r.mutual_information.after}</b> · ` +
+      `self-consistency error <b>${sc.mean_error_mm.after} mm</b> mean, ` +
+      `<b>${sc.max_error_mm.after} mm</b> max`;
   } catch { /* stats are optional */ }
 }
 

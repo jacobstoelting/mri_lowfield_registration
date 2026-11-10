@@ -5,25 +5,26 @@ Run from the repo root after `python register.py`:
     python export_viewer.py
     python -m http.server -d docs 8000     # then open http://localhost:8000
 
-Writes to docs/data/ (all on the low-field grid, scaled 0-255 as uint8 so they load fast):
-    lowfield.nii.gz   simulated low-field scan (noise outside the head zeroed for display)
-    t1_before.nii.gz  3T T1 placed using scanner coordinates only (no correction)
-    t1_after.nii.gz   3T T1 after the rigid registration
-    results.json      copy of results/results.json (shown on the page)
+Writes to docs/data/ (uint8, 0-255, so they load fast):
+    t1_3t.nii.gz            3T T1 on its 1 mm grid, cropped to the head: the sharp reference
+    lowfield_before.nii.gz  64 mT scan, image centers lined up (no rotation)
+    lowfield_after.nii.gz   64 mT scan, moved by the registration result
+    results.json            copy of results/results.json (shown on the page)
 
-The files keep the scanner orientation (origin + direction), so NiiVue shows the head
-in correct anatomical orientation.
+The two 64 mT files contain the *same voxels* as the scanner recorded them. Only the header
+(where the volume sits and which way it points) differs, so nothing is interpolated or
+smoothed on our side and the real 1.6 x 1.6 x 5 mm voxels stay visible.
 """
 import shutil
 from pathlib import Path
 
+import numpy as np
 import SimpleITK as sitk
 
-from register import INV2_PATH, OUT, T1_PATH, mask_background, normalize
+from register import OUT, initial_transform, load_3t_t1, load_lowfield, normalize
 
-LOWFIELD_PATH = OUT / "simulated_lowfield.nii.gz"
-ALIGNED_PATH = OUT / "t1_aligned_to_lowfield.nii.gz"
 DOCS_DATA = Path("docs") / "data"
+CROP_MARGIN_MM = 6
 
 
 def to_uint8(img):
@@ -31,29 +32,69 @@ def to_uint8(img):
     return sitk.Cast(sitk.Round(normalize(img) * 255.0), sitk.sitkUInt8)
 
 
+def as_euler(tf):
+    """The registration returns a one-element CompositeTransform; unwrap it."""
+    if tf.GetName() == "CompositeTransform":
+        tf = sitk.CompositeTransform(tf).GetNthTransform(0)
+    return sitk.Euler3DTransform(tf)
+
+
+def relocate(img, tf):
+    """Move an image rigidly by rewriting its header instead of resampling it.
+
+    tf maps a point of this image to where it belongs in the other scan:
+    p -> R p + offset. A voxel at index i sits at origin + D S i, so after the move it sits
+    at tf(origin) + (R D) S i: new origin = tf(origin), new direction = R D. Same voxels.
+    """
+    out = sitk.Image(img)
+    R = np.array(tf.GetMatrix()).reshape(3, 3)
+    D = np.array(img.GetDirection()).reshape(3, 3)
+    out.SetDirection(tuple((R @ D).ravel()))
+    out.SetOrigin(tf.TransformPoint(img.GetOrigin()))
+    return out
+
+
+def crop_to_head(img, margin_mm):
+    """Crop to the bounding box of the nonzero (masked) head, plus a margin."""
+    stats = sitk.LabelShapeStatisticsImageFilter()
+    stats.Execute(sitk.Cast(img > 0, sitk.sitkUInt8))
+    x, y, z, sx, sy, sz = stats.GetBoundingBox(1)
+    m = [int(np.ceil(margin_mm / s)) for s in img.GetSpacing()]
+    lo = [max(0, v - mi) for v, mi in zip((x, y, z), m)]
+    hi = [min(n, v + s + mi) for v, s, mi, n in zip((x, y, z), (sx, sy, sz), m, img.GetSize())]
+    return sitk.RegionOfInterest(img, [h - l for h, l in zip(hi, lo)], lo)
+
+
 def main():
-    for p in (LOWFIELD_PATH, ALIGNED_PATH):
-        if not p.exists():
-            raise SystemExit(f"Missing {p}. Run `python register.py` first.")
+    tfm = OUT / "t1_to_lowfield.tfm"
+    if not tfm.exists():
+        raise SystemExit(f"Missing {tfm}. Run `python register.py` first.")
     DOCS_DATA.mkdir(parents=True, exist_ok=True)
 
-    low = sitk.ReadImage(str(LOWFIELD_PATH), sitk.sitkFloat32)
-    # Display only: zero the noise outside the head (mask from a smoothed copy of the scan
-    # itself), otherwise the 3D render is a solid box of noise. Noise inside the head stays.
-    low = mask_background(low, sitk.SmoothingRecursiveGaussian(low, 2.0))
-    after = sitk.ReadImage(str(ALIGNED_PATH), sitk.sitkFloat32)
-    # "Before": masked T1 on the low-field grid with an identity transform, i.e. trusting the
-    # scanner coordinates and ignoring the head movement. Background 0 so normalize() skips it.
-    t1 = mask_background(sitk.ReadImage(str(T1_PATH)), sitk.ReadImage(str(INV2_PATH)))
-    before = sitk.Resample(t1, low, sitk.Transform(), sitk.sitkLinear, 0.0)
+    low = load_lowfield()
+    t1 = load_3t_t1()
+    after = as_euler(sitk.ReadTransform(str(tfm)))
+    # "Before" = the same starting guess register.py uses (image centers lined up). It must be
+    # computed on the uncropped T1, because cropping moves the image center.
+    before = as_euler(initial_transform(normalize(low), normalize(t1), "GEOMETRY"))
 
-    for name, img in (("lowfield", low), ("t1_before", before), ("t1_after", after)):
+    outputs = {
+        "t1_3t": crop_to_head(t1, CROP_MARGIN_MM),
+        "lowfield_before": relocate(low, before),
+        "lowfield_after": relocate(low, after),
+    }
+    for name, img in outputs.items():
         out = DOCS_DATA / f"{name}.nii.gz"
         sitk.WriteImage(to_uint8(img), str(out), useCompression=True)
-        print(f"wrote {out}  ({out.stat().st_size / 1e6:.2f} MB)")
+        print(f"wrote {out}  {img.GetSize()} @ {tuple(round(s, 2) for s in img.GetSpacing())} mm"
+              f"  ({out.stat().st_size / 1e6:.2f} MB)")
 
     shutil.copy(OUT / "results.json", DOCS_DATA / "results.json")
     print(f"wrote {DOCS_DATA / 'results.json'}")
+
+    # Files from the old simulated-data viewer
+    for old in ("lowfield.nii.gz", "t1_before.nii.gz", "t1_after.nii.gz"):
+        (DOCS_DATA / old).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
