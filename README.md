@@ -1,119 +1,146 @@
-# Aligning a 3T brain MRI to a real 64 mT low-field scan
+# Aligning real 64 mT portable MRI to 3T brain scans
 
-A small Python + SimpleITK project. It takes a sharp 3T hospital brain scan and lines it up
-with a scan of the same person from a portable 64 mT low-field scanner (Hyperfine Swoop),
-then measures how well it worked.
+**[Open the 3D viewer](https://jacobstoelting.github.io/mri_lowfield_registration/)** (runs in the browser, nothing to install)
 
-Portable low-field MRI scanners make blurrier, noisier images than hospital 3T scanners. If
-a patient already has a 3T scan, aligning it to the new low-field scan lets you compare the
-two or use the sharp scan to help read the blurry one. The first step is registration:
-finding the rotation and shift that line the scans up.
+This project takes brain scans of the same person from two very different MRI scanners and
+lines them up automatically:
+
+- a **portable 64 mT low-field scanner** (Hyperfine Swoop): coarse 1.6 x 1.6 x 5 mm voxels,
+  made at the bedside
+- a **3T hospital scanner** (Philips Achieva): sharp 1 mm voxels
+
+Then it measures how well they line up, and shows the result in an interactive 3D viewer.
+It uses Python and SimpleITK, with a NiiVue page for the viewer.
 
 ![Before and after overlay](results/overlay_before_after.png)
 
-## Results (sub-0035, 64 mT T2 <- 3T T1)
+## Why line them up?
+
+Portable low-field MRI can scan patients where a 3T scanner can't go, for example in the
+ICU, but its images are much coarser. Registration finds the rotation and shift that map
+each point in one scan to the same piece of anatomy in the other. That step comes before
+anything that compares or combines the scans:
+
+- **Follow-up.** Compare a new bedside scan with an earlier 3T scan, location by location
+  ("have the ventricles grown?").
+- **Carrying 3T information over.** Outlines drawn on the sharp 3T scan (brain regions,
+  lesions, a surgical plan) can be placed on the low-field scan.
+- **Low-field enhancement.** Training or testing a model that makes 64 mT images look like
+  3T needs pairs where each voxel matches the same anatomy.
+
+This project does the alignment. It does not upscale or change the low-field images.
+
+## Results
+
+Subject `sub-0035`. Fixed image: 64 mT T2. Moving image: 3T T1.
 
 | | Before | After |
 |---|---|---|
-| Mutual information (higher = more aligned) | 0.292 | 0.435 |
-| Self-consistency error, mean over the head | 18.4 mm | 0.65 mm |
+| Mutual information (higher = better aligned) | 0.292 | 0.435 |
+| Self-consistency error, mean over the head | 18.4 mm | **0.65 mm** |
 | Self-consistency error, worst case | 27.8 mm | 1.02 mm |
 
-"Before" means the two image centers lined up, with no rotation. In raw scanner coordinates
-the scans don't overlap at all: the two scanners' coordinate systems are about 22 cm apart
-(mutual information 0.00).
+- **Before** means the two image centers lined up, with no rotation. In raw scanner
+  coordinates the scans don't overlap at all, because the two scanners' coordinate systems
+  are about 22 cm apart (mutual information 0.00).
+- **Self-consistency:** real scans have no known correct answer, so the 3T scan is moved
+  by a known rotation and shift (6, -4, 9 degrees; 7, -12, 5 mm) and registered again from
+  scratch. The new answer should equal the first one plus that known movement. It does, to
+  within 0.65 mm on average, less than half a 64 mT voxel.
 
-The 64 mT voxels are 1.6 x 1.6 x 5 mm, so the remaining error is smaller than one voxel.
+## The 3D viewer
+
+[jacobstoelting.github.io/mri_lowfield_registration](https://jacobstoelting.github.io/mri_lowfield_registration/)
+(built on [NiiVue](https://github.com/niivue/niivue), source in `docs/`)
+
+- Axial, coronal, sagittal and a rotatable 3D view at once.
+- Green = 64 mT scan, magenta = 3T scan. Where both are bright they add up to gray/white.
+- **Before / After / Flicker** move the 64 mT scan between its starting position and the
+  registered one. **64 mT** and **3T** buttons (keys 1 and 2) turn each scan on or off;
+  the sliders set opacity.
+
+How to read it:
+
+- **Judge alignment by edges, not color.** T1 and T2 show tissue almost oppositely (fluid is
+  dark on T1 and bright on T2), so brain tissue looks magenta and the ventricles look green
+  even when the alignment is perfect. Check that the outlines of the skull, brain and
+  ventricles sit on top of each other, or use Flicker and watch what jumps.
+- **The blockiness is real.** The 64 mT scan is shown exactly as recorded: 5 mm slices,
+  which look like stair-steps in the coronal and sagittal views. It is moved into place by
+  rewriting its file header (position and orientation), not by resampling, so nothing is
+  smoothed or invented. The display grid is the 1 mm 3T scan, so the 3T stays sharp.
+
+## How it works (`register.py`)
+
+1. **Load.** The 3T T1 is put on a 1 mm isotropic grid. That's its real measured
+   resolution (the file is interpolated to 0.49 mm in-plane).
+2. **Clean.** Zero the background with a head mask: Otsu threshold on a smoothed copy, then
+   fill holes. Clip each scan to its 1st-99th percentile and scale to 0-1.
+3. **Starting guess.** Line up the image centers (GEOMETRY), and separately the centers of
+   mass (MOMENTS). Register from both and keep the higher mutual information. Here both
+   reach the same answer.
+4. **Rigid registration** with `sitk.ImageRegistrationMethod`:
+   - `Euler3DTransform`: 3 rotations + 3 shifts, since it's the same head.
+   - Mattes mutual information. It works across contrasts because it only asks that one
+     image's intensities predict the other's, not that they're equal.
+   - Regular-step gradient descent, coarse-to-fine (images shrunk 4x, 2x, then full size).
+5. **Self-consistency check** (above), then write the outputs and figures.
+
+Notes:
+
+- **Bias field.** Brightness in the 64 mT T2 varies by about +-15% across the head.
+  Correcting it with N4 changed the result by only 0.2 mm on average, so it isn't used.
+- **Orientation.** NIfTI stores positions in RAS, while SimpleITK works in LPS (x and y
+  flipped). SimpleITK converts on read, and each image's direction matrix records how its
+  voxel grid is tilted, so scans from both scanners share one coordinate space without
+  manual flipping.
 
 ## Data
 
 [Paired 64mT and 3T Brain MRI Scans of Healthy Subjects for Neuroimaging Research](https://doi.org/10.5281/zenodo.20281403)
-(R.B. van den Broek, B. Lena, A. Webb; C.J. Gorter MRI Center, Leiden University Medical
-Center), Zenodo record 20281403 (v5), **MIT license**. 86 low-field sessions from 66 healthy
-volunteers; 11 of them were also scanned at 3T (same subject IDs in both folders). The
-data are in BIDS format (NIfTI) and defaced.
+(Leiden University Medical Center), Zenodo record 20281403 (v5), **MIT license**.
 
-| Scan | Scanner | Voxels |
-|---|---|---|
-| T2-weighted (fixed image) | Hyperfine Swoop, 64 mT | 1.6 x 1.6 x 5 mm |
-| T1-weighted, 3D (moving image) | Philips Achieva dStream, 3T | 1 x 1 x 1 mm measured (file interpolated to 0.49 mm in-plane) |
+- 86 low-field sessions from 66 healthy volunteers. 11 of the volunteers were also scanned
+  at 3T, with the same subject IDs in both folders.
+- BIDS format (NIfTI), faces removed.
 
 > van den Broek, R.B., Lena, B., & Webb, A. (2026). Paired 64mT and 3T Brain MRI Scans of
 > Healthy Subjects for Neuroimaging Research (v5). Zenodo. https://doi.org/10.5281/zenodo.20281403
-
-## How it works
-
-1. **Load and clean.** The 3T T1 is put on a 1 mm isotropic grid (its true measured
-   resolution). The background of both scans is zeroed with a head mask (Otsu threshold
-   on a smoothed copy, then fill holes).
-2. **Normalize intensities.** Both scans are clipped to their 1st-99th percentile and
-   scaled to 0-1, so a few very bright voxels don't control the result.
-3. **Starting guess.** The two scanners use unrelated coordinate systems, so the
-   registration starts by lining up the image centers (`CenteredTransformInitializer`,
-   GEOMETRY), and also tries lining up the centers of mass (MOMENTS). It keeps whichever
-   ends with higher mutual information. Here both reach the same answer.
-4. **Rigid registration** (`sitk.ImageRegistrationMethod`):
-   - Transform: `Euler3DTransform`, 3 rotations + 3 shifts, since it's the same head.
-   - Metric: Mattes mutual information. T1 and T2 have opposite contrast (fluid is dark on
-     T1 and bright on T2), so matching intensities directly would fail. Mutual information
-     only asks that one image's intensities predict the other's.
-   - Optimizer: regular-step gradient descent, run coarse-to-fine (images shrunk 4x, then
-     2x, then full size) so it doesn't get stuck on small details early.
-5. **Check the answer without ground truth.** Real scans have no known "correct" movement,
-   so the test is self-consistency: rotate and shift the 3T scan by a known amount (6, -4,
-   9 degrees; 7, -12, 5 mm), register again from scratch, and compare the new answer with
-   the first one plus that known movement. The error is the distance between where the two
-   send each head voxel.
-
-Bias field: the 64 mT T2 brightness varies by about +-15% across the head. Correcting it
-with N4 changed the result by 0.2 mm on average, so it is not used.
-
-### Orientation (LPS vs RAS)
-
-NIfTI files describe positions in RAS (+x toward the patient's Right, +y Anterior,
-+z Superior). ITK/SimpleITK and DICOM use LPS (+x toward Left, +y Posterior, +z Superior),
-so SimpleITK flips the sign of x and y when it reads a NIfTI. Every image here then lives
-in LPS millimeters, and each image's direction matrix says how its voxel grid is tilted in
-that space. (Mixing the two conventions by hand is a classic way to get a left-right
-flipped result.)
 
 ## Run it
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python download_data.py   # 1.4 GB from Zenodo, unpacked to data/leiden/
-python register.py        # about 30 seconds
+python download_data.py      # 1.4 GB from Zenodo, unpacked to data/leiden/
+python register.py           # about 30 seconds; writes results/
+python export_viewer.py      # writes the viewer's scans to docs/data/
+python -m http.server -d docs 8000   # optional: preview the viewer at http://localhost:8000
 ```
 
-The subject and which 64 mT scan to use are constants at the top of `register.py`.
-Outputs go to `results/`: the overlay and checkerboard images, the optimizer curve,
-`results.json`, the transform (`t1_to_lowfield.tfm`), the 64 mT scan (`lowfield.nii.gz`)
-and the 3T T1 aligned to it (`t1_aligned_to_lowfield.nii.gz`).
+The subject and which 64 mT scan to use (`T2w`, `FLAIR` or `T1w`) are constants at the
+top of `register.py`.
 
-## 3D viewer
+## Files
 
-A browser viewer built on [NiiVue](https://github.com/niivue/niivue) shows the 64 mT scan
-(green) on the sharp 1 mm 3T T1 (magenta) in axial, coronal, sagittal and 3D at once, with
-a before/after toggle. Where both scans are bright, green + magenta add up to gray/white.
+| File | What it does |
+|---|---|
+| `download_data.py` | Downloads and unpacks the Zenodo dataset into `data/` |
+| `register.py` | Loads, cleans and registers the scans; self-consistency test; writes `results/` |
+| `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
+| `export_viewer.py` | Writes the 3 scans the viewer loads to `docs/data/` |
+| `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
+| `results/` | Figures, `results.json`, and the transform `t1_to_lowfield.tfm` |
 
-```bash
-python export_viewer.py                  # writes docs/data/
-python -m http.server -d docs 8000       # open http://localhost:8000
-```
+`register.py` also keeps `simulate_low_field`, which makes a fake low-field scan with a
+known movement. It's unused in the main pipeline and is there for a planned robustness test.
 
-The 64 mT scan is moved into place by rewriting its header (position and orientation), not
-by resampling it, so its real 5 mm slices show as-is. The stair-steps in the coronal and
-sagittal views are the actual low-field resolution.
+## Limits and next steps
 
-## Limits
-
-- One subject (sub-0035) and one 64 mT contrast (T2). 10 more paired subjects are in the
-  dataset.
-- Rigid only. It doesn't model low-field geometric distortion or brain shape changes
-  between the two visits.
-- Self-consistency is not ground truth. It shows the method lands in the same place again,
-  not that this place is anatomically exact. It is also optimistic, because the moved copy
-  is the same 3T image.
-- The 3T and 64 mT scans were taken on different days, and the head sits differently in
-  each scanner, so there is no "true" movement to compare against.
+- **One subject, one contrast.** 10 more paired subjects are in the dataset, plus 64 mT T1
+  and FLAIR scans. Running them all would show how reliable the method is.
+- **Rigid only.** It doesn't model low-field geometric distortion or brain changes between
+  the two visits, which were on different days.
+- **Self-consistency is not ground truth.** It shows the method lands in the same place
+  again, not that the place is anatomically exact, and it is optimistic because the moved
+  copy is the same 3T image. Manually placed landmarks would be a stronger check.
