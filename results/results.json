@@ -1,0 +1,25 @@
+{
+  "mutual_information": {
+    "before": 0.347,
+    "after": 0.5358
+  },
+  "mean_error_mm": {
+    "before": 16.01,
+    "after": 0.31
+  },
+  "max_error_mm": {
+    "before": 29.12,
+    "after": 0.44
+  },
+  "true_rotation_deg": [
+    6.0,
+    -4.0,
+    9.0
+  ],
+  "true_shift_mm_about_center": [
+    7.0,
+    -12.0,
+    5.0
+  ],
+  "iterations": 662
+}
