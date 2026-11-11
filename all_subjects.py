@@ -55,7 +55,8 @@ def main():
         results["seconds"] = round(time.time() - t0, 1)
         sc = results["self_consistency"]
         mi_gap = abs(results["start_mi"]["GEOMETRY"] - results["start_mi"]["MOMENTS"])
-        results["flagged"] = bool(sc["mean_error_mm"]["after"] > FLAG_MM
+        results["flagged"] = bool(not results["converged"]
+                                  or sc["mean_error_mm"]["after"] > FLAG_MM
                                   or (results["starts_differ_mm"] > FLAG_MM and mi_gap < CLOSE_MI))
         rows.append(results)
         panels.append(outline_panels(r["fixed"], r["moving"], r["est_tf"]))

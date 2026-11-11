@@ -37,13 +37,24 @@ def lowfield_path(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
             / f"{subject}_{session}_run-1_{contrast}.nii.gz")
 
 
+def three_t_path(subject=SUBJECT, contrast="T1w", acq="highres"):
+    """A 3T scan. acq="highres" is the clinical protocol, "lowres" the one acquired at about
+    the 64 mT voxel size (1.38 x 1.38 x 5 mm)."""
+    return LEIDEN / "3T data" / subject / "anat" / f"{subject}_acq-{acq}_{contrast}.nii.gz"
+
+
 def t1_3t_path(subject=SUBJECT):
-    return LEIDEN / "3T data" / subject / "anat" / f"{subject}_acq-highres_T1w.nii.gz"
+    return three_t_path(subject, "T1w", "highres")
 
 
 def paired_subjects():
     """The volunteers scanned on both machines (the 3T folder only has those)."""
     return sorted(p.name for p in (LEIDEN / "3T data").glob("sub-*") if p.is_dir())
+
+
+def lowfield_sessions(subject=SUBJECT):
+    """The subject's 64 mT sessions, e.g. ["ses-01", "ses-02"]."""
+    return sorted(p.name for p in (LEIDEN / "64mT data" / subject).glob("ses-*") if p.is_dir())
 
 
 T1_SPACING_MM = 1.0  # the 3T T1 was measured at 1 mm; the file is interpolated to 0.49 mm in-plane
@@ -87,17 +98,23 @@ def mask_background(img, mask_source=None):
     return sitk.Cast(img, sitk.sitkFloat32) * sitk.Cast(head, sitk.sitkFloat32)
 
 
-def resample_isotropic(img, spacing):
-    """Resample onto a grid with the same orientation and extent but cubic voxels."""
-    size = [int(round(n * s / spacing)) for n, s in zip(img.GetSize(), img.GetSpacing())]
+def resample_spacing(img, spacing):
+    """Resample onto a grid with the same orientation and extent but the given voxel size (mm,
+    one number for cubic voxels or one per axis)."""
+    spacing = np.broadcast_to(np.asarray(spacing, dtype=float), (3,))
+    size = [int(round(n * s / t)) for n, s, t in zip(img.GetSize(), img.GetSpacing(), spacing)]
     grid = sitk.Image(size, sitk.sitkFloat32)
-    grid.SetSpacing((spacing,) * 3)
+    grid.SetSpacing(tuple(spacing))
     grid.SetDirection(img.GetDirection())
     # keep the physical corner of the volume where it was (voxel centers shift by half a voxel)
     corner = np.array(img.TransformContinuousIndexToPhysicalPoint([-0.5] * 3))
     d = np.array(img.GetDirection()).reshape(3, 3)
-    grid.SetOrigin(tuple(corner + d @ np.full(3, spacing / 2.0)))
+    grid.SetOrigin(tuple(corner + d @ (spacing / 2.0)))
     return sitk.Resample(img, grid, sitk.Transform(), sitk.sitkLinear, 0.0)
+
+
+def resample_isotropic(img, spacing):
+    return resample_spacing(img, spacing)
 
 
 def load_lowfield(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
@@ -110,6 +127,22 @@ def load_3t_t1(subject=SUBJECT):
     """The 3T T1 on a 1 mm isotropic grid (its true acquired resolution), background masked."""
     t1 = sitk.ReadImage(str(t1_3t_path(subject)), sitk.sitkFloat32)
     return mask_background(resample_isotropic(t1, T1_SPACING_MM))
+
+
+# The 3T high-res T2 file has 0.22 mm in-plane voxels (interpolated) and 3 mm slices. Nothing
+# finer than the 1 mm T1 it is compared with is needed, so it is resampled to 1 x 1 x 3 mm.
+T2_3T_SPACING_MM = (1.0, 1.0, 3.0)
+
+
+def load_3t(subject=SUBJECT, contrast="T1w", acq="highres"):
+    """Any 3T scan, background masked. The high-res T1 and T2 are brought to a manageable grid;
+    the other scans are used as stored."""
+    if (contrast, acq) == ("T1w", "highres"):
+        return load_3t_t1(subject)
+    img = sitk.ReadImage(str(three_t_path(subject, contrast, acq)), sitk.sitkFloat32)
+    if (contrast, acq) == ("T2w", "highres"):
+        img = resample_spacing(img, T2_3T_SPACING_MM)
+    return mask_background(img)
 
 
 def simulate_low_field(flair, true_tf, rng):
@@ -147,7 +180,11 @@ def normalize(img):
     return out
 
 
-MAX_ITERATIONS = 2000  # per resolution level; 400 cut some subjects off before convergence
+# Per resolution level. The full-resolution level should stop because its step shrank below
+# minStep (converged), not because it ran out: 400 cut several subjects off, and 2000 still cut
+# off sub-0011, which creeps slowly along a nearly flat direction. Coarse levels are cheap, so a
+# generous limit costs little time; runs that converge stop early anyway.
+MAX_ITERATIONS = 20000
 
 
 def register(fixed, moving, init, shrink=(4, 2, 1), smooth_mm=(2, 1, 0), verbose=True,
@@ -173,9 +210,12 @@ def register(fixed, moving, init, shrink=(4, 2, 1), smooth_mm=(2, 1, 0), verbose
     history = []
     reg.AddCommand(sitk.sitkIterationEvent, lambda: history.append(reg.GetMetricValue()))
     tf = reg.Execute(fixed, moving)
+    stop = reg.GetOptimizerStopConditionDescription()
     if verbose:
-        print(f"  optimizer stopped: {reg.GetOptimizerStopConditionDescription()}")
-    return tf, history
+        print(f"  optimizer stopped: {stop}")
+    # The stop condition is the full-resolution level's: converged means its step shrank to minStep.
+    converged = "Step too small" in stop
+    return tf, history, converged
 
 
 def mutual_information(fixed, moving, tf):
@@ -216,14 +256,25 @@ def register_best(fixed, moving):
     runs = []
     for how in ("GEOMETRY", "MOMENTS"):
         print(f" start: {how}")
-        tf, history = register(fixed, moving, initial_transform(fixed, moving, how))
+        tf, history, converged = register(fixed, moving, initial_transform(fixed, moving, how))
         mi = mutual_information(fixed, moving, tf)
         print(f"  final MI {mi:.4f}")
-        runs.append((mi, how, tf, history))
+        runs.append((mi, how, tf, history, converged))
     starts_differ_mm = registration_error_mm(fixed, runs[0][2], runs[1][2])[0]
-    start_mi = {how: round(mi, 4) for mi, how, _, _ in runs}
-    mi, how, tf, history = max(runs, key=lambda r: r[0])
-    return mi, how, tf, history, starts_differ_mm, start_mi
+    start_mi = {how: round(mi, 4) for mi, how, _, _, _ in runs}
+    mi, how, tf, history, converged = max(runs, key=lambda r: r[0])
+    return mi, how, tf, history, starts_differ_mm, start_mi, converged
+
+
+def register_images(fixed_img, moving_img):
+    """Normalize two masked scans and register moving -> fixed from both starting guesses.
+    Returns (normalized fixed, normalized moving, transform mapping fixed points to moving
+    points, final MI)."""
+    fixed, moving = normalize(fixed_img), normalize(moving_img)
+    mi, _, tf, _, _, _, converged = register_best(fixed, moving)
+    if not converged:
+        print("  WARNING: did not converge")
+    return fixed, moving, tf, mi
 
 
 def run_subject(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
@@ -241,7 +292,8 @@ def run_subject(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
     start = initial_transform(fixed, moving, "GEOMETRY")  # "before": centers lined up
 
     print("Register 3T T1 -> 64 mT")
-    after_mi, init_used, est_tf, history, starts_differ, start_mi = register_best(fixed, moving)
+    after_mi, init_used, est_tf, history, starts_differ, start_mi, converged = \
+        register_best(fixed, moving)
 
     # Self-consistency: move the 3T scan by a known amount P and register again from scratch.
     # moved(x) = t1(P(x)), so if est maps low-field points to T1 points, the new answer
@@ -249,7 +301,7 @@ def run_subject(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
     print("Self-consistency test: known extra movement of the 3T scan")
     P = euler(TRUE_ROTATION_DEG, TRUE_SHIFT_MM, image_center(t1))
     moved = normalize(sitk.Resample(t1, t1, P, sitk.sitkLinear, 0.0))
-    est2 = register_best(fixed, moved)[2]
+    _, _, est2, *_, converged2 = register_best(fixed, moved)
     sc_before = registration_error_mm(fixed, sitk.CompositeTransform([P, est_tf]), est_tf)
     sc_after = registration_error_mm(fixed, sitk.CompositeTransform([P, est2]), est_tf)
 
@@ -278,6 +330,7 @@ def run_subject(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
             "max_error_mm": {"before": round(sc_before[1], 2), "after": round(sc_after[1], 2)},
         },
         "iterations": len(history),
+        "converged": bool(converged and converged2),
     }
     return results, dict(low=low, t1=t1, fixed=fixed, moving=moving, start=start,
                          est_tf=est_tf, history=history)

@@ -8,18 +8,18 @@
     "mutual_information": {
       "raw_scanner_coordinates": 0.0,
       "before": 0.1484,
-      "after": 0.4005
+      "after": 0.4012
     },
-    "start_used": "MOMENTS",
+    "start_used": "GEOMETRY",
     "start_mi": {
-      "GEOMETRY": 0.3204,
-      "MOMENTS": 0.4005
+      "GEOMETRY": 0.4012,
+      "MOMENTS": 0.4012
     },
-    "starts_differ_mm": 23.71,
+    "starts_differ_mm": 0.01,
     "estimated_rotation_deg": [
-      8.1,
-      -0.93,
-      6.73
+      8.51,
+      -0.82,
+      6.63
     ],
     "self_consistency": {
       "known_rotation_deg": [
@@ -34,15 +34,16 @@
       ],
       "mean_error_mm": {
         "before": 17.87,
-        "after": 0.57
+        "after": 0.67
       },
       "max_error_mm": {
         "before": 26.2,
-        "after": 1.11
+        "after": 1.36
       }
     },
-    "iterations": 6000,
-    "seconds": 123.0,
+    "iterations": 29148,
+    "converged": true,
+    "seconds": 286.7,
     "flagged": false
   },
   {
@@ -56,12 +57,12 @@
       "before": 0.2284,
       "after": 0.4176
     },
-    "start_used": "GEOMETRY",
+    "start_used": "MOMENTS",
     "start_mi": {
       "GEOMETRY": 0.4176,
       "MOMENTS": 0.4176
     },
-    "starts_differ_mm": 0.0,
+    "starts_differ_mm": 0.01,
     "estimated_rotation_deg": [
       -0.04,
       4.53,
@@ -84,11 +85,12 @@
       },
       "max_error_mm": {
         "before": 26.23,
-        "after": 1.64
+        "after": 1.63
       }
     },
-    "iterations": 1619,
-    "seconds": 33.5,
+    "iterations": 2251,
+    "converged": true,
+    "seconds": 31.2,
     "flagged": false
   },
   {
@@ -102,7 +104,7 @@
       "before": 0.3392,
       "after": 0.422
     },
-    "start_used": "MOMENTS",
+    "start_used": "GEOMETRY",
     "start_mi": {
       "GEOMETRY": 0.422,
       "MOMENTS": 0.422
@@ -133,8 +135,9 @@
         "after": 1.2
       }
     },
-    "iterations": 3435,
-    "seconds": 32.4,
+    "iterations": 2667,
+    "converged": true,
+    "seconds": 27.2,
     "flagged": false
   },
   {
@@ -179,8 +182,9 @@
         "after": 1.45
       }
     },
-    "iterations": 4432,
-    "seconds": 56.8,
+    "iterations": 5593,
+    "converged": true,
+    "seconds": 51.6,
     "flagged": false
   },
   {
@@ -192,18 +196,18 @@
     "mutual_information": {
       "raw_scanner_coordinates": 0.0144,
       "before": 0.3045,
-      "after": 0.42
+      "after": 0.4204
     },
-    "start_used": "GEOMETRY",
+    "start_used": "MOMENTS",
     "start_mi": {
-      "GEOMETRY": 0.42,
-      "MOMENTS": 0.4186
+      "GEOMETRY": 0.4204,
+      "MOMENTS": 0.4204
     },
-    "starts_differ_mm": 0.58,
+    "starts_differ_mm": 0.0,
     "estimated_rotation_deg": [
-      15.09,
-      4.03,
-      -4.89
+      15.17,
+      3.97,
+      -4.99
     ],
     "self_consistency": {
       "known_rotation_deg": [
@@ -217,16 +221,17 @@
         5.0
       ],
       "mean_error_mm": {
-        "before": 18.06,
-        "after": 1.3
+        "before": 18.05,
+        "after": 1.29
       },
       "max_error_mm": {
-        "before": 27.62,
-        "after": 2.11
+        "before": 27.61,
+        "after": 2.19
       }
     },
-    "iterations": 5429,
-    "seconds": 143.9,
+    "iterations": 8609,
+    "converged": true,
+    "seconds": 156.9,
     "flagged": false
   },
   {
@@ -245,11 +250,11 @@
       "GEOMETRY": 0.4352,
       "MOMENTS": 0.4352
     },
-    "starts_differ_mm": 0.01,
+    "starts_differ_mm": 0.0,
     "estimated_rotation_deg": [
       7.63,
-      1.74,
-      -3.05
+      1.75,
+      -3.06
     ],
     "self_consistency": {
       "known_rotation_deg": [
@@ -271,8 +276,9 @@
         "after": 1.01
       }
     },
-    "iterations": 1201,
-    "seconds": 22.3,
+    "iterations": 1209,
+    "converged": true,
+    "seconds": 20.2,
     "flagged": false
   },
   {
@@ -289,9 +295,9 @@
     "start_used": "GEOMETRY",
     "start_mi": {
       "GEOMETRY": 0.4285,
-      "MOMENTS": 0.4107
+      "MOMENTS": 0.4285
     },
-    "starts_differ_mm": 2.76,
+    "starts_differ_mm": 0.0,
     "estimated_rotation_deg": [
       9.61,
       -3.24,
@@ -317,8 +323,9 @@
         "after": 0.27
       }
     },
-    "iterations": 3065,
-    "seconds": 49.2,
+    "iterations": 3327,
+    "converged": true,
+    "seconds": 86.4,
     "flagged": false
   },
   {
@@ -332,14 +339,14 @@
       "before": 0.2652,
       "after": 0.4443
     },
-    "start_used": "GEOMETRY",
+    "start_used": "MOMENTS",
     "start_mi": {
       "GEOMETRY": 0.4443,
       "MOMENTS": 0.4443
     },
-    "starts_differ_mm": 0.0,
+    "starts_differ_mm": 0.01,
     "estimated_rotation_deg": [
-      17.23,
+      17.22,
       5.11,
       -2.53
     ],
@@ -356,15 +363,16 @@
       ],
       "mean_error_mm": {
         "before": 17.29,
-        "after": 0.61
+        "after": 0.6
       },
       "max_error_mm": {
         "before": 25.6,
         "after": 1.06
       }
     },
-    "iterations": 3769,
-    "seconds": 37.7,
+    "iterations": 7355,
+    "converged": true,
+    "seconds": 40.8,
     "flagged": false
   },
   {
@@ -409,8 +417,9 @@
         "after": 0.2
       }
     },
-    "iterations": 2181,
-    "seconds": 14.2,
+    "iterations": 3539,
+    "converged": true,
+    "seconds": 12.0,
     "flagged": false
   },
   {
@@ -455,8 +464,9 @@
         "after": 1.64
       }
     },
-    "iterations": 638,
-    "seconds": 75.0,
+    "iterations": 473,
+    "converged": true,
+    "seconds": 71.2,
     "flagged": false
   },
   {
@@ -472,13 +482,13 @@
     },
     "start_used": "MOMENTS",
     "start_mi": {
-      "GEOMETRY": 0.2725,
+      "GEOMETRY": 0.3844,
       "MOMENTS": 0.3844
     },
-    "starts_differ_mm": 22.16,
+    "starts_differ_mm": 0.0,
     "estimated_rotation_deg": [
-      4.56,
-      -3.26,
+      4.57,
+      -3.27,
       1.47
     ],
     "self_consistency": {
@@ -494,15 +504,16 @@
       ],
       "mean_error_mm": {
         "before": 18.51,
-        "after": 0.29
+        "after": 0.3
       },
       "max_error_mm": {
         "before": 27.14,
-        "after": 0.61
+        "after": 0.62
       }
     },
-    "iterations": 2957,
-    "seconds": 70.4,
+    "iterations": 10243,
+    "converged": true,
+    "seconds": 609.3,
     "flagged": false
   }
 ]

@@ -1,0 +1,189 @@
+[
+  {
+    "subject": "sub-0011",
+    "loop_error_mm": {
+      "mean": 2.67,
+      "max": 4.9
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 0.72,
+      "max_mm": 1.23,
+      "rotation_deg": 0.39
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.4012,
+      "B_lowfield_to_3t_t2": 0.5415,
+      "C_3t_t2_to_3t_t1": 0.5609
+    }
+  },
+  {
+    "subject": "sub-0015",
+    "loop_error_mm": {
+      "mean": 0.58,
+      "max": 0.99
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 2.99,
+      "max_mm": 4.07,
+      "rotation_deg": 0.89
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.4176,
+      "B_lowfield_to_3t_t2": 0.5564,
+      "C_3t_t2_to_3t_t1": 0.5093
+    }
+  },
+  {
+    "subject": "sub-0023",
+    "loop_error_mm": {
+      "mean": 1.09,
+      "max": 1.89
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 0.74,
+      "max_mm": 0.81,
+      "rotation_deg": 0.16
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.422,
+      "B_lowfield_to_3t_t2": 0.5462,
+      "C_3t_t2_to_3t_t1": 0.5668
+    }
+  },
+  {
+    "subject": "sub-0025",
+    "loop_error_mm": {
+      "mean": 1.24,
+      "max": 2.13
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 1.09,
+      "max_mm": 2.36,
+      "rotation_deg": 1.18
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.3614,
+      "B_lowfield_to_3t_t2": 0.5541,
+      "C_3t_t2_to_3t_t1": 0.4647
+    }
+  },
+  {
+    "subject": "sub-0027",
+    "loop_error_mm": {
+      "mean": 1.15,
+      "max": 1.62
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 1.5,
+      "max_mm": 1.69,
+      "rotation_deg": 0.12
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.4204,
+      "B_lowfield_to_3t_t2": 0.5778,
+      "C_3t_t2_to_3t_t1": 0.5249
+    }
+  },
+  {
+    "subject": "sub-0035",
+    "loop_error_mm": {
+      "mean": 1.44,
+      "max": 2.5
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 0.93,
+      "max_mm": 1.98,
+      "rotation_deg": 0.6
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.4352,
+      "B_lowfield_to_3t_t2": 0.5431,
+      "C_3t_t2_to_3t_t1": 0.5988
+    }
+  },
+  {
+    "subject": "sub-0046",
+    "loop_error_mm": {
+      "mean": 0.72,
+      "max": 1.31
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 0.63,
+      "max_mm": 0.72,
+      "rotation_deg": 0.12
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.4285,
+      "B_lowfield_to_3t_t2": 0.5772,
+      "C_3t_t2_to_3t_t1": 0.5447
+    }
+  },
+  {
+    "subject": "sub-0047",
+    "loop_error_mm": {
+      "mean": 0.86,
+      "max": 1.8
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 0.9,
+      "max_mm": 1.3,
+      "rotation_deg": 0.35
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.4443,
+      "B_lowfield_to_3t_t2": 0.6027,
+      "C_3t_t2_to_3t_t1": 0.4962
+    }
+  },
+  {
+    "subject": "sub-0048",
+    "loop_error_mm": {
+      "mean": 0.61,
+      "max": 1.22
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 1.32,
+      "max_mm": 2.68,
+      "rotation_deg": 1.18
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.4021,
+      "B_lowfield_to_3t_t2": 0.5435,
+      "C_3t_t2_to_3t_t1": 0.4952
+    }
+  },
+  {
+    "subject": "sub-0064",
+    "loop_error_mm": {
+      "mean": 3.31,
+      "max": 5.6
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 1.17,
+      "max_mm": 2.62,
+      "rotation_deg": 1.1
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.3897,
+      "B_lowfield_to_3t_t2": 0.476,
+      "C_3t_t2_to_3t_t1": 0.5182
+    }
+  },
+  {
+    "subject": "sub-0066",
+    "loop_error_mm": {
+      "mean": 1.78,
+      "max": 3.09
+    },
+    "within_3t_session_motion": {
+      "mean_mm": 1.23,
+      "max_mm": 1.97,
+      "rotation_deg": 0.51
+    },
+    "mutual_information": {
+      "A_lowfield_to_3t_t1": 0.3844,
+      "B_lowfield_to_3t_t2": 0.5493,
+      "C_3t_t2_to_3t_t1": 0.5014
+    }
+  }
+]
