@@ -1,4 +1,4 @@
-"""Collect every results table into docs/data/info.json for the "More info" page (docs/info.html).
+"""Collect every results table into docs/data/info.json for the "Data" page (docs/info.html).
 
 Run from the repo root after the analysis scripts (any that haven't been run are skipped):
     python export_info.py

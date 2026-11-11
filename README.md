@@ -116,7 +116,7 @@ weaker signal and different contrast at 64 mT add to it. This control is easier 
 way: the 3T scans come from the same scanner and session as the 3T T1 (the low-res T1 is even
 the same contrast). Results: `results/field_strength.json`.
 
-All tables, per subject: the viewer's **More info** page.
+All tables, per subject: the viewer's **Data** page.
 
 ### What went wrong first
 
@@ -147,7 +147,7 @@ minutes including the self-consistency check.
   scans (T2, FLAIR or T1), each registered to the same 3T T1. The subject menu shows each
   volunteer's self-consistency error for the chosen scan. The choices, and the before/after
   and view settings, stay in the address bar, so a copied link reopens the same view.
-- **More info** (button at the top right) opens a page with every results table: the main
+- **Data** (button at the top right) opens a page with every results table: the main
   result, the consistency loop, the three 64 mT scans, the repeat sessions and the
   field-strength check. The page builds them from the pipeline's output (`docs/data/info.json`).
 - **Side by side, linked.** The 64 mT scan on the left and the 3T scan on the right, both in
@@ -221,7 +221,7 @@ python consistency_loop.py   # stricter accuracy check through the 3T T2, about 
 python repeat_sessions.py    # repeat 64 mT sessions: head position and a second loop, about 25 minutes
 python field_strength.py     # additional check with the 3T low-res scans, about 45 minutes
 python export_viewer.py      # writes every subject's viewer files to docs/data/ (needs all_subjects.py first)
-python export_info.py        # collects all results tables for the More info page
+python export_info.py        # collects all results tables for the Data page
 python -m http.server -d docs 8000   # optional: preview the viewer at http://localhost:8000
 ```
 
@@ -238,12 +238,12 @@ top of `register.py`.
 | `consistency_loop.py` | Consistency loop: registers each 64 mT T2 to the 3T T2 too, and the 3T T2 to the 3T T1, and checks the two routes agree |
 | `repeat_sessions.py` | Registers each repeat 64 mT session to session 1 and checks the loop through it to the 3T T1 |
 | `field_strength.py` | Additional check: registers the 3T low-res scans (64 mT voxel size) with the same pipeline |
-| `export_info.py` | Collects every results table into `docs/data/info.json` for the More info page |
+| `export_info.py` | Collects every results table into `docs/data/info.json` for the Data page |
 | `smoke_test.py` | Quick check after code changes: registers sub-0035 and fails if the result got worse |
 | `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
 | `export_viewer.py` | Writes each subject's 3T scan, 3T outlines and three 64 mT scans to `docs/data/sub-XXXX/`, plus the subject list |
 | `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
-| `docs/info.html` | The More info page: all results tables |
+| `docs/info.html` | The Data page: all results tables |
 | `results/` | Figures, `results.json`, and the transform `t1_to_lowfield.tfm` |
 
 `register.py` also keeps `simulate_low_field`, which makes a fake low-field scan with a
