@@ -99,7 +99,8 @@ takes about 2 minutes including the self-consistency check.
   scan (3D Canny), and edges work across contrasts even though T1 and T2 show tissue almost
   oppositely (fluid is dark on T1 and bright on T2). In **After** they trace the 64 mT
   ventricles, brain and skull; in **Before** they visibly miss. **Flicker** alternates the
-  two. Toggle the outlines with the button or the O key.
+  two. Toggle the outlines with the button or the O key. They start off in "3 planes + 3D",
+  where they would also cover the 64 mT 3D render.
 - **The blockiness is real.** The 64 mT scan is shown exactly as recorded: 5 mm slices,
   which look like stair-steps in the coronal and sagittal views. It is moved into place by
   rewriting its file header (position and orientation), not by resampling, so nothing is

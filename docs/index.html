@@ -54,7 +54,7 @@
   <div class="group">
     <span>View</span>
     <select id="view">
-      <option value="mpr3d">3 planes + 3D (3T)</option>
+      <option value="mpr3d">3 planes + 3D</option>
       <option value="mpr">3 planes</option>
       <option value="0">Axial</option>
       <option value="1">Coronal</option>
@@ -119,6 +119,11 @@ for (const nv of [nvLow, nvT1]) {
 
 let showAfter = true, edgesOn = true, flickerTimer = null;
 
+// Outlines are on by default, except in "3 planes + 3D": a NiiVue view holds all its layers in
+// one 3D texture, so they can't be hidden in the 3D tile alone and would cover the 64 mT render
+// in a yellow skin. The button / O key still turns them on there.
+const edgesDefault = () => $("view").value !== "mpr3d";
+
 function applyVisibility() {
   nvLow.setOpacity(BEFORE, showAfter ? 0 : 1);
   nvLow.setOpacity(AFTER, showAfter ? 1 : 0);
@@ -135,7 +140,7 @@ function updateUrl() {
   const q = new URLSearchParams(location.search);
   if ($("subject").value) q.set("subject", $("subject").value);
   if (showAfter) q.delete("lf"); else q.set("lf", "before");
-  if (edgesOn) q.delete("outlines"); else q.set("outlines", "0");
+  if (edgesOn === edgesDefault()) q.delete("outlines"); else q.set("outlines", edgesOn ? "1" : "0");
   if ($("view").value === "mpr3d") q.delete("view"); else q.set("view", $("view").value);
   history.replaceState(null, "", "?" + q.toString());
 }
@@ -152,9 +157,7 @@ function applyView() {
   for (const nv of [nvLow, nvT1]) {
     nv.setMultiplanarLayout(MULTIPLANAR_GRID);   // same 2x2 layout in both, so planes line up
     if (v === "mpr3d" || v === "mpr") {
-      // "3 planes + 3D" shows the 3D render only on the 3T side (see applyVisibility)
-      const render = v === "mpr3d" && nv === nvT1;
-      nv.opts.multiplanarShowRender = render ? SHOW_RENDER.ALWAYS : SHOW_RENDER.NEVER;
+      nv.opts.multiplanarShowRender = v === "mpr3d" ? SHOW_RENDER.ALWAYS : SHOW_RENDER.NEVER;
       nv.setSliceType(SLICE_TYPE.MULTIPLANAR);
     } else {
       nv.setSliceType(Number(v));
@@ -171,7 +174,7 @@ $("btnFlicker").onclick = () => {
   flickerTimer = setInterval(() => setShowAfter(!showAfter), 600);
 };
 $("btnEdges").onclick = () => { edgesOn = !edgesOn; applyVisibility(); };
-$("view").onchange = applyView;
+$("view").onchange = () => { edgesOn = edgesDefault(); applyView(); };
 document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "SELECT") return;
   if (e.key === "o" || e.key === "O") $("btnEdges").click();
@@ -253,7 +256,7 @@ async function main() {
   const q = new URLSearchParams(location.search);
   if (q.has("view")) $("view").value = q.get("view");
   showAfter = q.get("lf") !== "before";
-  edgesOn = q.get("outlines") !== "0";
+  edgesOn = q.has("outlines") ? q.get("outlines") !== "0" : edgesDefault();
   const wanted = q.get("subject");
   await loadSubject(subjects.some((r) => r.subject === wanted) ? wanted : list.default);
 }
