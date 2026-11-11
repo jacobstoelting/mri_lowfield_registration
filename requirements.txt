@@ -1,3 +1,4 @@
-SimpleITK>=2.3
-numpy
-matplotlib
+# Exact versions the results in README.md were produced with (Python 3.12, conda env `mri`).
+SimpleITK==2.5.7
+numpy==2.5.4
+matplotlib==3.11.2

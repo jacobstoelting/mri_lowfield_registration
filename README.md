@@ -151,6 +151,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python download_data.py      # 1.4 GB from Zenodo, unpacked to data/leiden/
 python register.py           # one subject (sub-0035), 20-30 seconds; writes results/
+python smoke_test.py         # optional: checks sub-0035 still registers (MI up, error under 1.5 mm)
 python all_subjects.py       # all 11 paired subjects, about 9 minutes
 python export_viewer.py      # writes every subject's viewer files to docs/data/ (needs all_subjects.py first)
 python -m http.server -d docs 8000   # optional: preview the viewer at http://localhost:8000
@@ -166,6 +167,7 @@ top of `register.py`.
 | `download_data.py` | Downloads and unpacks the Zenodo dataset into `data/` |
 | `register.py` | Loads, cleans and registers the scans; self-consistency test; writes `results/` |
 | `all_subjects.py` | Runs `register.py`'s pipeline for all 11 paired subjects; summary table, contact sheet, and each subject's transform (`results/transforms/`) |
+| `smoke_test.py` | Quick check after code changes: registers sub-0035 and fails if the result got worse |
 | `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
 | `export_viewer.py` | Writes each subject's scans and 3T outlines to `docs/data/sub-XXXX/`, plus the subject list |
 | `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
