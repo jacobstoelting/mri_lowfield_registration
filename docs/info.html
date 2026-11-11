@@ -4,57 +4,78 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>More info: 64 mT vs 3T MRI registration</title>
+<link rel="stylesheet" href="style.css">
 <style>
-  :root { --bg: #111; --panel: #1c1c1c; --text: #ddd; --muted: #999; --line: #333; --bad: #ff8a65; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 15px/1.5 system-ui, -apple-system, sans-serif; }
-  header { padding: 10px 14px; background: var(--panel); display: flex; gap: 18px; align-items: center;
-           position: sticky; top: 0; z-index: 1; }
-  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
-  header a { color: var(--text); background: #2a2a2a; border: 1px solid #444; border-radius: 4px;
-             padding: 4px 10px; text-decoration: none; }
-  nav { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 12px; }
-  nav a { color: var(--muted); }
-  main { max-width: 980px; margin: 0 auto; padding: 8px 18px 60px; }
-  h2 { font-size: 19px; margin: 36px 0 6px; padding-top: 8px; border-top: 1px solid var(--line); }
-  h2 small { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 6px; }
-  p { margin: 6px 0; max-width: 80ch; }
-  .read { color: var(--muted); }
-  .read b { color: var(--text); }
-  .headline { font-size: 17px; }
-  table { border-collapse: collapse; margin: 12px 0; font-variant-numeric: tabular-nums; font-size: 14px; }
-  th, td { padding: 4px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  th { color: var(--muted); font-weight: 500; vertical-align: bottom; white-space: normal; }
+  html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+  .topbar { position: sticky; top: 0; z-index: 2; }
+  nav { display: flex; flex-wrap: wrap; gap: 2px; }
+  nav a { font-size: 13px; color: var(--muted); text-decoration: none; padding: 6px 10px;
+          border-radius: 7px; transition: background 0.15s, color 0.15s; }
+  nav a:hover { color: var(--text); background: var(--surface-2); }
+  main { max-width: 1040px; margin: 0 auto; padding: 36px 24px 96px; }
+  .intro h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .intro p { color: var(--muted); max-width: 72ch; margin: 0; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;
+           margin: 26px 0 8px; }
+  .stat { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+          padding: 16px 18px; }
+  .stat .value { font-size: 26px; font-weight: 600; letter-spacing: -0.02em;
+                 font-variant-numeric: tabular-nums; }
+  .stat .value small { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+  .stat .name { font-size: 13px; margin-top: 2px; }
+  .stat .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  section { margin-top: 56px; }
+  section > h2 { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; }
+  section > .sub { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+  p { max-width: 78ch; }
+  .read { color: #b9b9c1; margin: 0 0 14px; }
+  .read b { color: var(--text); font-weight: 600; }
+  .note { font-size: 13px; color: var(--muted); border-left: 2px solid var(--line-strong);
+          padding: 2px 0 2px 12px; margin: 14px 0 0; }
+  .note b { color: var(--text); }
+  .table-wrap { border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto;
+                background: var(--surface); margin: 10px 0; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 13.5px; }
+  th, td { padding: 9px 14px; text-align: right; white-space: nowrap; }
+  th { font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;
+       color: var(--faint); vertical-align: bottom; white-space: normal; border-bottom: 1px solid var(--line); }
+  td { border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
   th:first-child, td:first-child { text-align: left; }
-  tr.median td { font-weight: 600; border-top: 2px solid #555; }
-  .bad { color: var(--bad); }
-  .note { color: var(--muted); font-size: 13px; }
+  tbody tr:hover td { background: rgba(255, 255, 255, 0.025); }
+  tr.median td { font-weight: 600; border-top: 1px solid var(--line-strong); border-bottom: 0;
+                 background: var(--surface-2); }
+  .caption { font-size: 12px; color: var(--muted); margin: 18px 0 0; text-transform: uppercase;
+             letter-spacing: 0.06em; }
   .missing { color: var(--muted); font-style: italic; }
+  footer.page { margin-top: 72px; padding-top: 18px; border-top: 1px solid var(--line);
+                font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
-<header>
-  <a href="index.html">← Back to viewer</a>
-  <h1>More info</h1>
+<header class="topbar">
+  <a class="btn" href="index.html">← Viewer</a>
+  <div class="brand"><b>More info</b><span>All results tables</span></div>
+  <div class="spacer"></div>
   <nav>
     <a href="#main">Main result</a>
     <a href="#loop">Consistency loop</a>
-    <a href="#contrasts">64 mT contrasts</a>
+    <a href="#contrasts">Contrasts</a>
     <a href="#sessions">Repeat sessions</a>
-    <a href="#field">Additional check: field strength</a>
+    <a href="#field">Field strength</a>
   </nav>
 </header>
 
 <main>
-  <p class="headline" id="headline"></p>
-  <p class="read">Every table on this page is built from the pipeline's own output
-    (<code>docs/data/info.json</code>, generated <span id="generated"></span>). Errors are in
-    millimeters, averaged over every point of the head. For scale, one 64 mT voxel is
-    1.6 × 1.6 × 5 mm.</p>
+  <div class="intro">
+    <h1>How well do the scans line up?</h1>
+    <p id="headline">Real scans have no known right answer, so the registration is checked several
+      independent ways. Errors are in millimeters, averaged over every point of the head.</p>
+  </div>
+  <div class="stats" id="stats"></div>
 
   <section id="main">
-    <h2>Main result <small>64 mT T2 ← 3T T1, all 11 volunteers</small></h2>
+    <h2>Main result</h2>
+    <p class="sub">64 mT T2 ← 3T T1, all 11 volunteers</p>
     <p class="read"><b>How to read this:</b> mutual information measures how well one scan's
       brightness predicts the other's. It should rise a lot from "before" (image centers lined
       up) to "after". The two error columns are two independent ways to check the answer when
@@ -63,7 +84,8 @@
   </section>
 
   <section id="loop">
-    <h2>Consistency loop <small>route through the 3T T2</small></h2>
+    <h2>Consistency loop</h2>
+    <p class="sub">A second route to the 3T T1, through the 3T T2</p>
     <p class="read"><b>How to read this:</b> the 64 mT scan is registered to the 3T T1 directly,
       and also to the 3T T2 from the same 3T session, which is then registered to the 3T T1.
       Both routes should send each point of the head to the same place; the <b>loop error</b>
@@ -79,7 +101,8 @@
   </section>
 
   <section id="contrasts">
-    <h2>64 mT contrasts <small>T2, FLAIR and T1, each registered to the same 3T T1</small></h2>
+    <h2>64 mT contrasts</h2>
+    <p class="sub">T2, FLAIR and T1, each registered to the same 3T T1</p>
     <p class="read"><b>How to read this:</b> a bedside protocol has limited scan time, so it
       matters which 64 mT scan registers best. Every contrast is registered to the same 3T T1
       with the same settings, so differences come from the 64 mT scan alone. The viewer's
@@ -89,7 +112,8 @@
   </section>
 
   <section id="sessions">
-    <h2>Repeat 64 mT sessions <small>same volunteer, different days</small></h2>
+    <h2>Repeat 64 mT sessions</h2>
+    <p class="sub">Same volunteer, different days</p>
     <p class="read"><b>How to read this:</b> five volunteers had the 64 mT scan repeated on
       other days. <b>Head position</b> is how far the head sat from its first-session position in
       the scanner: scans from different days must be registered before they can be compared
@@ -101,7 +125,8 @@
   </section>
 
   <section id="field">
-    <h2>Additional check: field strength or voxel size? <small>3T low-res scans as a control</small></h2>
+    <h2>Additional check: field strength or voxel size?</h2>
+    <p class="sub">3T low-res scans as a control</p>
     <p class="read"><b>How to read this:</b> the 3T session also recorded each contrast at a
       low resolution close to the 64 mT one (1.38 × 1.38 × 5 mm vs 1.6 × 1.6 × 5 mm). Those
       3T low-res scans go through exactly the same pipeline as the 64 mT scans. If their errors
@@ -113,6 +138,9 @@
       already share a coordinate frame. The registration doesn't use that: it starts from the
       same starting guesses as for 64 mT.</p>
   </section>
+  <footer class="page">Every table is built from the pipeline's own output
+    (<code>docs/data/info.json</code>, generated <span id="generated"></span>).
+    Data: van den Broek, Lena &amp; Webb, LUMC (Zenodo 10.5281/zenodo.20281403, MIT license).</footer>
 </main>
 
 <script>
@@ -125,7 +153,7 @@ const median = (xs) => {
   const m = Math.floor(s.length / 2);
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
-const notConverged = '<span class="bad" title="The optimizer was still improving when it hit its iteration limit">not converged</span>';
+const notConverged = '<span class="badge" title="The optimizer was still improving when it hit its iteration limit">not converged</span>';
 
 // cols: [header, row => cell html, value for the median row (optional)]
 function table(rows, cols, withMedian = true) {
@@ -135,7 +163,7 @@ function table(rows, cols, withMedian = true) {
     h += '<tr class="median">' + cols.map((c, i) =>
       `<td>${i === 0 ? "Median" : c[2] ? medianCell(c[0], median(rows.map(c[2]))) : ""}</td>`).join("") + "</tr>";
   }
-  return h + "</tbody></table>";
+  return '<div class="table-wrap">' + h + "</tbody></table></div>";
 }
 // Median cells use the column's units: degrees, mutual information (no unit) or mm.
 const medianCell = (header, v) =>
@@ -158,7 +186,7 @@ function contrastSummary(rows) {
     ["Median MI after", (r) => fmt(r.mi, 3)],
     ["Median self-consistency error", (r) => fmt(r.sc) + " mm"],
     ["Worst subject", (r) => fmt(r.worst) + " mm"],
-    ["Not converged", (r) => (r.nc ? `<span class="bad">${r.nc}</span>` : "0")],
+    ["Not converged", (r) => (r.nc ? `<span class="badge">${r.nc}</span>` : "0")],
   ], false);
 }
 
@@ -169,11 +197,18 @@ async function main() {
   const t2 = regs.filter((r) => r.contrast === "T2w");
   const loop = Object.fromEntries((info.consistency_loop ?? []).map((r) => [r.subject, r]));
 
-  // Headline
+  // Headline numbers
   const scMed = median(t2.map((r) => r.self_consistency_mean_mm));
   const loopMed = median(Object.values(loop).map((r) => r.loop_mean_mm));
-  $("headline").innerHTML = `Median error <b>${fmt(loopMed)} mm</b> by the stricter consistency loop and ` +
-    `<b>${fmt(scMed)} mm</b> by self-consistency, over ${t2.length} volunteers. Both are smaller than one 64 mT voxel.`;
+  const sessMed = median((info.repeat_sessions ?? []).map((r) => r.loop_mean_mm));
+  const stat = (value, unit, name, hint) => value == null ? "" :
+    `<div class="stat"><div class="value">${value}<small>${unit}</small></div>` +
+    `<div class="name">${name}</div><div class="hint">${hint}</div></div>`;
+  $("stats").innerHTML =
+    stat(fmt(loopMed), "mm", "Consistency loop", "Median, the stricter check") +
+    stat(fmt(scMed), "mm", "Self-consistency", `Median over ${t2.length} volunteers`) +
+    stat(fmt(sessMed), "mm", "Repeat-session loop", "Median over different days") +
+    stat("1.6 × 1.6 × 5", "mm", "One 64 mT voxel", "Every median is smaller");
 
   // Main table
   if (t2.length) {
@@ -205,7 +240,7 @@ async function main() {
     const cs = Object.keys(NAMES);
     const get = (s, c) => regs.find((r) => r.subject === s && r.contrast === c);
     const cell = (x) => (x ? fmt(x.self_consistency_mean_mm) + " mm" + (x.converged ? "" : " " + notConverged) : "–");
-    $("contrastTable").innerHTML = "<p class='read'>Self-consistency error per subject:</p>" +
+    $("contrastTable").innerHTML = "<p class='caption'>Self-consistency error per subject</p>" +
       table(subjects.map((s) => ({ s })), [
         ["Subject", (r) => r.s],
         ...cs.map((c) => [`64 mT ${NAMES[c]}`, (r) => cell(get(r.s, c)), (r) => get(r.s, c)?.self_consistency_mean_mm]),
@@ -246,7 +281,7 @@ async function main() {
     const subjects = [...new Set(fs.map((r) => r.subject))];
     const get = (rows, s, c) => rows.find((r) => r.subject === s && r.contrast === c);
     const cell = (x) => (x ? fmt(x.self_consistency_mean_mm) + " mm" + (x.converged ? "" : " " + notConverged) : "–");
-    $("fieldTable").innerHTML = "<p class='read'>3T low-res self-consistency error per subject:</p>" +
+    $("fieldTable").innerHTML = "<p class='caption'>3T low-res self-consistency error per subject</p>" +
       table(subjects.map((s) => ({ s })), [
         ["Subject", (r) => r.s],
         ...cs.map((c) => [`3T low-res ${NAMES[c]}`, (r) => cell(get(fs, r.s, c)), (r) => get(fs, r.s, c)?.self_consistency_mean_mm]),

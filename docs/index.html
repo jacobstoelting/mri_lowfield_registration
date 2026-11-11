@@ -4,62 +4,60 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Real 64 mT vs 3T MRI registration viewer</title>
+<link rel="stylesheet" href="style.css">
 <style>
-  :root { --bg: #111; --panel: #1c1c1c; --text: #ddd; --muted: #999; --edge: #ffd400; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
-               font: 14px/1.4 system-ui, -apple-system, sans-serif; }
-  body { display: flex; flex-direction: column; }
-  header { padding: 10px 14px; background: var(--panel); display: flex; flex-wrap: wrap;
-           gap: 18px; align-items: center; }
-  header h1 { font-size: 16px; margin: 0 8px 0 0; font-weight: 600; }
-  .group { display: flex; gap: 6px; align-items: center; }
-  .group > span { color: var(--muted); }
-  button { background: #2a2a2a; color: var(--text); border: 1px solid #444; border-radius: 4px;
-           padding: 4px 10px; cursor: pointer; font: inherit; }
-  button.on { background: #555; border-color: #aaa; color: #fff; }
-  select { font: inherit; }
-  main { flex: 1; display: flex; gap: 4px; min-height: 0; }
-  .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .pane h2 { margin: 0; padding: 5px 10px; font-size: 13px; font-weight: 600; background: #181818; }
-  .pane h2 small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  main { flex: 1; display: flex; gap: 8px; padding: 8px; min-height: 0; }
+  .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--line);
+          border-radius: var(--radius); overflow: hidden; background: #050506; }
+  .pane-head { display: flex; align-items: baseline; gap: 10px; padding: 9px 14px;
+               border-bottom: 1px solid var(--line); background: var(--surface); }
+  .pane-head h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -0.005em; }
+  .pane-head .meta { font-size: 12px; color: var(--muted); }
+  .pane-head .legend { margin-left: auto; font-size: 12px; color: var(--muted);
+                       display: inline-flex; align-items: center; gap: 7px; }
   .pane .wrap { flex: 1; position: relative; min-height: 0; }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  footer { padding: 6px 14px; background: var(--panel); color: var(--muted); display: flex;
-           flex-wrap: wrap; gap: 18px; font-variant-numeric: tabular-nums; }
+  footer { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; padding: 7px 16px;
+           border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
+           font-variant-numeric: tabular-nums; }
   footer b { color: var(--text); font-weight: 600; }
-  .edge { color: var(--edge); }
-  a.button { color: var(--text); background: #2a2a2a; border: 1px solid #444; border-radius: 4px;
-             padding: 4px 10px; text-decoration: none; margin-left: auto; }
+  #loc { font-family: var(--mono); font-size: 11.5px; }
+  #stats { margin-left: auto; }
+  /* The outline toggle is a state, not an action: a quieter "on" than the white primary button */
+  #btnEdges.on { background: var(--surface-2); color: var(--text); border-color: rgba(255, 255, 255, 0.45); }
+  @media (max-width: 900px) { main { flex-direction: column; } }
 </style>
 </head>
 <body>
-<header>
-  <h1>64 mT vs 3T</h1>
+<header class="topbar">
+  <div class="brand">
+    <b>64 mT ↔ 3T</b>
+    <span>Portable low-field MRI registered to 3T</span>
+  </div>
 
-  <div class="group">
-    <span>Subject</span>
+  <div class="field">
+    <label for="subject">Subject</label>
     <select id="subject" title="The 11 volunteers scanned on both machines (mean self-consistency error)"></select>
   </div>
 
-  <div class="group">
-    <span>64 mT scan</span>
+  <div class="field">
+    <label for="contrast">64 mT scan</label>
     <select id="contrast" title="Which 64 mT scan is shown. Each was registered to the same 3T T1 on its own."></select>
   </div>
 
-  <div class="group">
-    <span>64 mT position:</span>
-    <button id="btnBefore">Before</button>
-    <button id="btnAfter" class="on">After</button>
+  <div class="field">
+    <span class="label">Position</span>
+    <div class="segmented" role="group" aria-label="64 mT position">
+      <button id="btnBefore">Before</button>
+      <button id="btnAfter" class="on">After</button>
+    </div>
     <button id="btnFlicker" title="Alternate before/after every 0.6 s">Flicker</button>
   </div>
 
-  <div class="group">
-    <button id="btnEdges" class="on" title="3T outlines on the 64 mT scan (key: O)">3T outlines</button>
-  </div>
-
-  <div class="group">
-    <span>View</span>
+  <div class="field">
+    <label for="view">View</label>
     <select id="view">
       <option value="mpr">3 planes</option>
       <option value="mpr3d">3 planes + 3D</option>
@@ -70,21 +68,29 @@
     </select>
   </div>
 
-  <div class="group">
-    <span>The views are linked: click, scroll or rotate in either one.
-      <span class="edge">Yellow lines</span> = edges of the 3T scan.</span>
-  </div>
+  <button id="btnEdges" class="on" title="3T outlines on the 64 mT scan (key: O)">
+    <span class="swatch"></span>3T outlines <span class="kbd">O</span>
+  </button>
 
-  <a class="button" href="info.html" title="All results tables and extra checks">More info</a>
+  <div class="spacer"></div>
+  <a class="btn primary" href="info.html" title="All results tables and extra checks">More info →</a>
 </header>
 
 <main>
   <section class="pane">
-    <h2>64 mT <span id="lowName">T2</span> <small>Hyperfine Swoop · <span id="lowVox">1.6 × 1.6 × 5</span> mm voxels</small></h2>
+    <div class="pane-head">
+      <h2>64 mT <span id="lowName">T2</span></h2>
+      <span class="meta">Hyperfine Swoop · <span id="lowVox">1.6 × 1.6 × 5</span> mm</span>
+      <span class="legend"><span class="swatch"></span>3T edges</span>
+    </div>
     <div class="wrap"><canvas id="glLow"></canvas></div>
   </section>
   <section class="pane">
-    <h2>3T T1 <small>Philips Achieva · 1 mm voxels</small></h2>
+    <div class="pane-head">
+      <h2>3T T1</h2>
+      <span class="meta">Philips Achieva · 1 mm</span>
+      <span class="legend">Views are linked</span>
+    </div>
     <div class="wrap"><canvas id="glT1"></canvas></div>
   </section>
 </main>
@@ -109,11 +115,11 @@ const BASE = 0, BEFORE = 1, AFTER = 2, EDGES = 3;   // volume indices in the lef
 const MULTIPLANAR_GRID = 2;                          // NiiVue MULTIPLANAR_TYPE.GRID
 
 const opts = {
-  backColor: [0.07, 0.07, 0.07, 1],
+  backColor: [0.02, 0.02, 0.024, 1],   // matches the pane background
   show3Dcrosshair: true,
   isOrientCube: true,
   multiplanarShowRender: SHOW_RENDER.ALWAYS,
-  crosshairColor: [0.2, 0.8, 1, 0.7],
+  crosshairColor: [1, 1, 1, 0.55],
 };
 const nvLow = new Niivue(opts);
 const nvT1 = new Niivue(opts);
@@ -204,9 +210,9 @@ function showStats(subject, contrast) {
   const r = statsFor(subject, contrast);
   if (!r) return;
   $("stats").innerHTML =
-    `${subject} · 64 mT ${CONTRAST_NAMES[contrast]} · MI <b>${r.mi_before} → ${r.mi_after}</b> · ` +
-    `self-consistency error <b>${r.self_consistency_mean_mm} mm</b> mean, ` +
-    `<b>${r.self_consistency_max_mm} mm</b> max`;
+    `MI <b>${r.mi_before} → ${r.mi_after}</b> · ` +
+    `self-consistency <b>${r.self_consistency_mean_mm} mm</b> mean, ` +
+    `<b>${r.self_consistency_max_mm} mm</b> worst`;
 }
 
 // Menu labels follow the other menu: subjects show their error for the chosen contrast, and
@@ -255,7 +261,7 @@ async function loadSubject(subject, contrast) {
   showStats(subject, contrast);
   updateUrl();
   setMenusDisabled(false);
-  $("status").textContent = "Click to move the crosshair · scroll to change slice · drag in 3D to rotate";
+  $("status").textContent = "Click to move the crosshair · scroll for slices · drag in 3D to rotate";
 }
 
 $("subject").onchange = () => loadSubject($("subject").value, $("contrast").value).catch(loadFailed);
