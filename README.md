@@ -32,21 +32,54 @@ This project does the alignment. It does not upscale or change the low-field ima
 
 ## Results
 
-Subject `sub-0035`. Fixed image: 64 mT T2. Moving image: 3T T1.
+All 11 volunteers scanned on both machines. Fixed image: 64 mT T2 (session 1). Moving
+image: 3T T1.
 
-| | Before | After |
-|---|---|---|
-| Mutual information (higher = better aligned) | 0.292 | 0.435 |
-| Self-consistency error, mean over the head | 18.4 mm | **0.65 mm** |
-| Self-consistency error, worst case | 27.8 mm | 1.02 mm |
+| Subject | Mutual information before → after | Self-consistency error, mean | Self-consistency error, worst |
+|---|---|---|---|
+| sub-0011 | 0.148 → 0.401 | 0.59 mm | 1.12 mm |
+| sub-0015 | 0.228 → 0.418 | 0.82 mm | 1.64 mm |
+| sub-0023 | 0.339 → 0.422 | 0.67 mm | 1.20 mm |
+| sub-0025 | 0.217 → 0.361 | 0.71 mm | 1.45 mm |
+| sub-0027 | 0.305 → 0.420 | 1.30 mm | 2.11 mm |
+| sub-0035 | 0.292 → 0.435 | 0.65 mm | 1.01 mm |
+| sub-0046 | 0.316 → 0.429 | 0.14 mm | 0.27 mm |
+| sub-0047 | 0.265 → 0.444 | 0.61 mm | 1.06 mm |
+| sub-0048 | 0.224 → 0.402 | 0.15 mm | 0.20 mm |
+| sub-0064 | 0.198 → 0.390 | 0.84 mm | 1.64 mm |
+| sub-0066 | 0.176 → 0.384 | 0.29 mm | 0.61 mm |
+| **Median** | | **0.65 mm** | |
+
+Every subject is under 1.3 mm on average, smaller than one 64 mT voxel (1.6 x 1.6 x 5 mm).
+`sub-0035` is the one shown in the figure above and in the viewer.
 
 - **Before** means the two image centers lined up, with no rotation. In raw scanner
   coordinates the scans don't overlap at all, because the two scanners' coordinate systems
   are about 22 cm apart (mutual information 0.00).
 - **Self-consistency:** real scans have no known correct answer, so the 3T scan is moved
   by a known rotation and shift (6, -4, 9 degrees; 7, -12, 5 mm) and registered again from
-  scratch. The new answer should equal the first one plus that known movement. It does, to
-  within 0.65 mm on average, less than half a 64 mT voxel.
+  scratch. The new answer should equal the first one plus that known movement. The error
+  is how far apart the two answers put each point of the head.
+- **Two starting guesses** (image centers, and centers of mass) are registered for every
+  subject, keeping the one with higher mutual information. For 3 subjects they end in
+  different places, but the loser always scores clearly lower (for example 0.315 vs 0.401
+  for `sub-0011`), so the choice is clear. Starting from image centers alone would have
+  given a wrong answer, about 20 mm off, for `sub-0011` and `sub-0066`.
+
+Full results: `results/all_subjects.csv`. Contact sheet with the 3T outlines on each 64 mT
+scan: `results/all_subjects_overlay.png`.
+
+### What went wrong first
+
+The first run over all 11 subjects looked worse: 3 subjects had self-consistency errors of
+3.7-6.1 mm. A diagnosis showed the original registration, not the re-run, was the weak one:
+mapped back, the re-run's answer had *higher* mutual information. Every one of those runs
+had stopped at the optimizer's limit of 400 iterations per resolution level, while every
+good subject stopped because its step had shrunk to nothing (converged). The optimizer had
+been cut off while still improving. Raising the limit to 2000 brought those subjects to
+0.14-0.61 mm and left the already-converged subjects unchanged. Runs that converge stop
+early anyway, so the higher limit only costs time where it's needed; the slowest subject
+takes about 2 minutes including the self-consistency check.
 
 ## The 3D viewer
 
@@ -80,7 +113,8 @@ Subject `sub-0035`. Fixed image: 64 mT T2. Moving image: 3T T1.
    - `Euler3DTransform`: 3 rotations + 3 shifts, since it's the same head.
    - Mattes mutual information. It works across contrasts because it only asks that one
      image's intensities predict the other's, not that they're equal.
-   - Regular-step gradient descent, coarse-to-fine (images shrunk 4x, 2x, then full size).
+   - Regular-step gradient descent, coarse-to-fine (images shrunk 4x, 2x, then full size),
+     up to 2000 iterations per level. It stops early once its step shrinks below a minimum.
 5. **Self-consistency check** (above), then write the outputs and figures.
 
 Notes:
@@ -110,7 +144,8 @@ Notes:
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python download_data.py      # 1.4 GB from Zenodo, unpacked to data/leiden/
-python register.py           # about 30 seconds; writes results/
+python register.py           # one subject (sub-0035), 20-30 seconds; writes results/
+python all_subjects.py       # all 11 paired subjects, about 9 minutes
 python export_viewer.py      # writes the viewer's scans to docs/data/
 python -m http.server -d docs 8000   # optional: preview the viewer at http://localhost:8000
 ```
@@ -124,6 +159,7 @@ top of `register.py`.
 |---|---|
 | `download_data.py` | Downloads and unpacks the Zenodo dataset into `data/` |
 | `register.py` | Loads, cleans and registers the scans; self-consistency test; writes `results/` |
+| `all_subjects.py` | Runs `register.py`'s pipeline for all 11 paired subjects; summary table and contact sheet |
 | `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
 | `export_viewer.py` | Writes the scans and 3T outlines the viewer loads to `docs/data/` |
 | `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
@@ -134,8 +170,8 @@ known movement. It's unused in the main pipeline and is there for a planned robu
 
 ## Limits and next steps
 
-- **One subject, one contrast.** 10 more paired subjects are in the dataset, plus 64 mT T1
-  and FLAIR scans. Running them all would show how reliable the method is.
+- **11 subjects, one contrast.** All paired volunteers are covered, but only with the 64 mT
+  T2 from their first session. The 64 mT T1 and FLAIR, and repeat sessions, are untested.
 - **Rigid only.** It doesn't model low-field geometric distortion or brain changes between
   the two visits, which were on different days.
 - **Self-consistency is not ground truth.** It shows the method lands in the same place

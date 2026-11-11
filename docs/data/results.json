@@ -1,5 +1,6 @@
 {
   "subject": "sub-0035",
+  "session": "ses-01",
   "fixed": "64 mT T2w (Hyperfine Swoop)",
   "moving": "3T T1 (Philips Achieva), 1 mm",
   "scanner_frame_offset_mm": 224.6,
@@ -8,7 +9,12 @@
     "before": 0.2915,
     "after": 0.4352
   },
-  "start_used": "GEOMETRY",
+  "start_used": "MOMENTS",
+  "start_mi": {
+    "GEOMETRY": 0.4352,
+    "MOMENTS": 0.4352
+  },
+  "starts_differ_mm": 0.0,
   "estimated_rotation_deg": [
     7.63,
     1.75,
@@ -31,8 +37,8 @@
     },
     "max_error_mm": {
       "before": 27.78,
-      "after": 1.02
+      "after": 1.01
     }
   },
-  "iterations": 632
+  "iterations": 1209
 }

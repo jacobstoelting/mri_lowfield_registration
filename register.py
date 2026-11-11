@@ -26,12 +26,25 @@ OUT = Path("results")
 LEIDEN = DATA / "leiden" / "v5 Paired 64mT and 3T Brain MRI Scans of Healthy Subjects for Neuroimaging Research" / "Data"
 
 # Which volunteer and which scans. The 64 mT and 3T folders share subject IDs (same person).
+# This subject drives the figures and the web viewer; all_subjects.py runs every pair.
 SUBJECT = "sub-0035"
 SESSION = "ses-01"
 LOWFIELD_CONTRAST = "T2w"  # 64 mT scan used as the fixed image: "T2w", "FLAIR" or "T1w"
-LOWFIELD_PATH = (LEIDEN / "64mT data" / SUBJECT / SESSION / "anat"
-                 / f"{SUBJECT}_{SESSION}_run-1_{LOWFIELD_CONTRAST}.nii.gz")
-T1_3T_PATH = LEIDEN / "3T data" / SUBJECT / "anat" / f"{SUBJECT}_acq-highres_T1w.nii.gz"
+
+
+def lowfield_path(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
+    return (LEIDEN / "64mT data" / subject / session / "anat"
+            / f"{subject}_{session}_run-1_{contrast}.nii.gz")
+
+
+def t1_3t_path(subject=SUBJECT):
+    return LEIDEN / "3T data" / subject / "anat" / f"{subject}_acq-highres_T1w.nii.gz"
+
+
+def paired_subjects():
+    """The volunteers scanned on both machines (the 3T folder only has those)."""
+    return sorted(p.name for p in (LEIDEN / "3T data").glob("sub-*") if p.is_dir())
+
 
 T1_SPACING_MM = 1.0  # the 3T T1 was measured at 1 mm; the file is interpolated to 0.49 mm in-plane
 
@@ -87,14 +100,15 @@ def resample_isotropic(img, spacing):
     return sitk.Resample(img, grid, sitk.Transform(), sitk.sitkLinear, 0.0)
 
 
-def load_lowfield():
+def load_lowfield(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
     """The real 64 mT scan with background masked (float32, original 1.6 x 1.6 x 5 mm grid)."""
-    return mask_background(sitk.ReadImage(str(LOWFIELD_PATH), sitk.sitkFloat32))
+    return mask_background(sitk.ReadImage(str(lowfield_path(subject, session, contrast)),
+                                          sitk.sitkFloat32))
 
 
-def load_3t_t1():
+def load_3t_t1(subject=SUBJECT):
     """The 3T T1 on a 1 mm isotropic grid (its true acquired resolution), background masked."""
-    t1 = sitk.ReadImage(str(T1_3T_PATH), sitk.sitkFloat32)
+    t1 = sitk.ReadImage(str(t1_3t_path(subject)), sitk.sitkFloat32)
     return mask_background(resample_isotropic(t1, T1_SPACING_MM))
 
 
@@ -133,7 +147,11 @@ def normalize(img):
     return out
 
 
-def register(fixed, moving, init, shrink=(4, 2, 1), smooth_mm=(2, 1, 0), verbose=True):
+MAX_ITERATIONS = 2000  # per resolution level; 400 cut some subjects off before convergence
+
+
+def register(fixed, moving, init, shrink=(4, 2, 1), smooth_mm=(2, 1, 0), verbose=True,
+             iterations=None):
     """Rigid (rotation + translation) registration that maximizes mutual information."""
     reg = sitk.ImageRegistrationMethod()
     # Mutual information works across contrasts (T1 vs T2): it rewards a consistent
@@ -142,7 +160,7 @@ def register(fixed, moving, init, shrink=(4, 2, 1), smooth_mm=(2, 1, 0), verbose
     reg.SetMetricSamplingStrategy(reg.NONE)  # use every voxel; random subsets made it jitter
     reg.SetInterpolator(sitk.sitkLinear)
     reg.SetOptimizerAsRegularStepGradientDescent(
-        learningRate=1.0, minStep=1e-4, numberOfIterations=400,
+        learningRate=1.0, minStep=1e-4, numberOfIterations=iterations or MAX_ITERATIONS,
         relaxationFactor=0.5, gradientMagnitudeTolerance=1e-8)
     # Make 1 radian of rotation and 1 mm of shift comparable for the optimizer.
     reg.SetOptimizerScalesFromPhysicalShift()
@@ -190,32 +208,40 @@ def initial_transform(fixed, moving, how):
 
 
 def register_best(fixed, moving):
-    """Try both starting guesses and keep the result with the higher mutual information."""
-    best = None
+    """Try both starting guesses and keep the result with the higher mutual information.
+
+    Also returns how far apart (mean mm over the head) the two answers are. If two different
+    starting points end at the same place, the optimizer is less likely to be stuck in a
+    wrong local optimum."""
+    runs = []
     for how in ("GEOMETRY", "MOMENTS"):
         print(f" start: {how}")
         tf, history = register(fixed, moving, initial_transform(fixed, moving, how))
         mi = mutual_information(fixed, moving, tf)
         print(f"  final MI {mi:.4f}")
-        if best is None or mi > best[0]:
-            best = (mi, how, tf, history)
-    return best
+        runs.append((mi, how, tf, history))
+    starts_differ_mm = registration_error_mm(fixed, runs[0][2], runs[1][2])[0]
+    start_mi = {how: round(mi, 4) for mi, how, _, _ in runs}
+    mi, how, tf, history = max(runs, key=lambda r: r[0])
+    return mi, how, tf, history, starts_differ_mm, start_mi
 
 
-def main():
-    OUT.mkdir(exist_ok=True)
+def run_subject(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
+    """Register one volunteer's 3T T1 to their 64 mT scan and measure the result.
 
-    low = load_lowfield()
-    t1 = load_3t_t1()
+    Returns (results dict, images and transforms needed for figures/outputs)."""
+    low = load_lowfield(subject, session, contrast)
+    t1 = load_3t_t1(subject)
     fixed, moving = normalize(low), normalize(t1)
-    print(f"{SUBJECT}: 64 mT {LOWFIELD_CONTRAST} {low.GetSize()} @ {low.GetSpacing()} mm "
-          f"(fixed) <- 3T T1 {t1.GetSize()} @ {t1.GetSpacing()} mm (moving)")
+    print(f"{subject}: 64 mT {contrast} {low.GetSize()} @ "
+          f"{tuple(round(s, 2) for s in low.GetSpacing())} mm (fixed) <- 3T T1 "
+          f"{t1.GetSize()} @ {t1.GetSpacing()} mm (moving)")
 
     identity = sitk.Euler3DTransform()
     start = initial_transform(fixed, moving, "GEOMETRY")  # "before": centers lined up
 
     print("Register 3T T1 -> 64 mT")
-    after_mi, init_used, est_tf, history = register_best(fixed, moving)
+    after_mi, init_used, est_tf, history, starts_differ, start_mi = register_best(fixed, moving)
 
     # Self-consistency: move the 3T scan by a known amount P and register again from scratch.
     # moved(x) = t1(P(x)), so if est maps low-field points to T1 points, the new answer
@@ -223,14 +249,15 @@ def main():
     print("Self-consistency test: known extra movement of the 3T scan")
     P = euler(TRUE_ROTATION_DEG, TRUE_SHIFT_MM, image_center(t1))
     moved = normalize(sitk.Resample(t1, t1, P, sitk.sitkLinear, 0.0))
-    _, _, est2, _ = register_best(fixed, moved)
+    est2 = register_best(fixed, moved)[2]
     sc_before = registration_error_mm(fixed, sitk.CompositeTransform([P, est_tf]), est_tf)
     sc_after = registration_error_mm(fixed, sitk.CompositeTransform([P, est2]), est_tf)
 
     euler_est = sitk.Euler3DTransform(sitk.CompositeTransform(est_tf).GetNthTransform(0))
     results = {
-        "subject": SUBJECT,
-        "fixed": f"64 mT {LOWFIELD_CONTRAST} (Hyperfine Swoop)",
+        "subject": subject,
+        "session": session,
+        "fixed": f"64 mT {contrast} (Hyperfine Swoop)",
         "moving": "3T T1 (Philips Achieva), 1 mm",
         "scanner_frame_offset_mm": round(float(np.linalg.norm(
             np.subtract(image_center(low), image_center(t1)))), 1),
@@ -240,6 +267,8 @@ def main():
             "after": round(after_mi, 4),
         },
         "start_used": init_used,
+        "start_mi": start_mi,
+        "starts_differ_mm": round(starts_differ, 2),
         "estimated_rotation_deg": [round(math.degrees(a), 2) for a in
                                    (euler_est.GetAngleX(), euler_est.GetAngleY(), euler_est.GetAngleZ())],
         "self_consistency": {
@@ -250,6 +279,14 @@ def main():
         },
         "iterations": len(history),
     }
+    return results, dict(low=low, t1=t1, fixed=fixed, moving=moving, start=start,
+                         est_tf=est_tf, history=history)
+
+
+def main():
+    OUT.mkdir(exist_ok=True)
+    results, r = run_subject()
+    low, t1, est_tf, history = r["low"], r["t1"], r["est_tf"], r["history"]
 
     sitk.WriteImage(low, str(OUT / "lowfield.nii.gz"))
     aligned = sitk.Resample(t1, low, est_tf, sitk.sitkLinear, 0.0)
@@ -260,7 +297,7 @@ def main():
     print(json.dumps(results, indent=2))
 
     from figures import save_figures
-    save_figures(fixed, moving, start, est_tf, history, results, OUT)
+    save_figures(r["fixed"], r["moving"], r["start"], est_tf, history, results, OUT)
 
 
 if __name__ == "__main__":
