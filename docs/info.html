@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>More info: 64 mT vs 3T MRI registration</title>
+<style>
+  :root { --bg: #111; --panel: #1c1c1c; --text: #ddd; --muted: #999; --line: #333; --bad: #ff8a65; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, sans-serif; }
+  header { padding: 10px 14px; background: var(--panel); display: flex; gap: 18px; align-items: center;
+           position: sticky; top: 0; z-index: 1; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header a { color: var(--text); background: #2a2a2a; border: 1px solid #444; border-radius: 4px;
+             padding: 4px 10px; text-decoration: none; }
+  nav { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 12px; }
+  nav a { color: var(--muted); }
+  main { max-width: 980px; margin: 0 auto; padding: 8px 18px 60px; }
+  h2 { font-size: 19px; margin: 36px 0 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h2 small { color: var(--muted); font-weight: 400; font-size: 14px; margin-left: 6px; }
+  p { margin: 6px 0; max-width: 80ch; }
+  .read { color: var(--muted); }
+  .read b { color: var(--text); }
+  .headline { font-size: 17px; }
+  table { border-collapse: collapse; margin: 12px 0; font-variant-numeric: tabular-nums; font-size: 14px; }
+  th, td { padding: 4px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; vertical-align: bottom; white-space: normal; }
+  th:first-child, td:first-child { text-align: left; }
+  tr.median td { font-weight: 600; border-top: 2px solid #555; }
+  .bad { color: var(--bad); }
+  .note { color: var(--muted); font-size: 13px; }
+  .missing { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html">← Back to viewer</a>
+  <h1>More info</h1>
+  <nav>
+    <a href="#main">Main result</a>
+    <a href="#loop">Consistency loop</a>
+    <a href="#contrasts">64 mT contrasts</a>
+    <a href="#sessions">Repeat sessions</a>
+    <a href="#field">Additional check: field strength</a>
+  </nav>
+</header>
+
+<main>
+  <p class="headline" id="headline"></p>
+  <p class="read">Every table on this page is built from the pipeline's own output
+    (<code>docs/data/info.json</code>, generated <span id="generated"></span>). Errors are in
+    millimeters, averaged over every point of the head. For scale, one 64 mT voxel is
+    1.6 × 1.6 × 5 mm.</p>
+
+  <section id="main">
+    <h2>Main result <small>64 mT T2 ← 3T T1, all 11 volunteers</small></h2>
+    <p class="read"><b>How to read this:</b> mutual information measures how well one scan's
+      brightness predicts the other's. It should rise a lot from "before" (image centers lined
+      up) to "after". The two error columns are two independent ways to check the answer when
+      there's no known right answer; lower is better.</p>
+    <div id="mainTable"></div>
+  </section>
+
+  <section id="loop">
+    <h2>Consistency loop <small>route through the 3T T2</small></h2>
+    <p class="read"><b>How to read this:</b> the 64 mT scan is registered to the 3T T1 directly,
+      and also to the 3T T2 from the same 3T session, which is then registered to the 3T T1.
+      Both routes should send each point of the head to the same place; the <b>loop error</b>
+      is how far apart they put it. This is stricter than self-consistency, which re-registers a
+      moved copy of the same image. The last columns show how much the head moved between the
+      3T T1 and T2 sequences, which the loop measures instead of assuming it was zero.</p>
+    <div id="loopTable"></div>
+    <p class="note">A large loop error shows the two routes disagree, but not which one is
+      wrong. <code>sub-0064</code>'s routes both converge and both starting guesses agree; they
+      just settle in different places. The 3T T2 has 3 mm slices and covers only 15 cm of the
+      head, so it gives the registration less to hold on to. Both routes start from the same
+      64 mT scan, so a distortion in that scan would bend both the same way and stay hidden.</p>
+  </section>
+
+  <section id="contrasts">
+    <h2>64 mT contrasts <small>T2, FLAIR and T1, each registered to the same 3T T1</small></h2>
+    <p class="read"><b>How to read this:</b> a bedside protocol has limited scan time, so it
+      matters which 64 mT scan registers best. Every contrast is registered to the same 3T T1
+      with the same settings, so differences come from the 64 mT scan alone. The viewer's
+      "64 mT scan" menu shows each one.</p>
+    <div id="contrastSummary"></div>
+    <div id="contrastTable"></div>
+  </section>
+
+  <section id="sessions">
+    <h2>Repeat 64 mT sessions <small>same volunteer, different days</small></h2>
+    <p class="read"><b>How to read this:</b> five volunteers had the 64 mT scan repeated on
+      other days. <b>Head position</b> is how far the head sat from its first-session position in
+      the scanner: scans from different days must be registered before they can be compared
+      point by point. The <b>loop error</b> compares two routes to the 3T T1: through session 1,
+      and directly from session N. The two 64 mT scans have independent noise and different head
+      positions, so this loop catches problems tied to one particular scan.</p>
+    <div id="sessionTable"></div>
+    <p class="note" id="sessionNote"></p>
+  </section>
+
+  <section id="field">
+    <h2>Additional check: field strength or voxel size? <small>3T low-res scans as a control</small></h2>
+    <p class="read"><b>How to read this:</b> the 3T session also recorded each contrast at a
+      low resolution close to the 64 mT one (1.38 × 1.38 × 5 mm vs 1.6 × 1.6 × 5 mm). Those
+      3T low-res scans go through exactly the same pipeline as the 64 mT scans. If their errors
+      are about the same, the coarse voxels are what limits registration; if the 64 mT errors are
+      clearly larger, the weaker signal and different contrast at 64 mT add to it.</p>
+    <div id="fieldSummary"></div>
+    <div id="fieldTable"></div>
+    <p class="note">The 3T low-res and high-res scans come from the same session, so they
+      already share a coordinate frame. The registration doesn't use that: it starts from the
+      same starting guesses as for 64 mT.</p>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const NAMES = { T2w: "T2", FLAIR: "FLAIR", T1w: "T1" };
+const fmt = (v, d = 2) => (v == null ? "–" : Number(v).toFixed(d));
+const median = (xs) => {
+  const s = xs.filter((x) => x != null).sort((a, b) => a - b);
+  if (!s.length) return null;
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
+const notConverged = '<span class="bad" title="The optimizer was still improving when it hit its iteration limit">not converged</span>';
+
+// cols: [header, row => cell html, value for the median row (optional)]
+function table(rows, cols, withMedian = true) {
+  let h = "<table><thead><tr>" + cols.map((c) => `<th>${c[0]}</th>`).join("") + "</tr></thead><tbody>";
+  for (const r of rows) h += "<tr>" + cols.map((c) => `<td>${c[1](r)}</td>`).join("") + "</tr>";
+  if (withMedian) {
+    h += '<tr class="median">' + cols.map((c, i) =>
+      `<td>${i === 0 ? "Median" : c[2] ? medianCell(c[0], median(rows.map(c[2]))) : ""}</td>`).join("") + "</tr>";
+  }
+  return h + "</tbody></table>";
+}
+// Median cells use the column's units: degrees, mutual information (no unit) or mm.
+const medianCell = (header, v) =>
+  /rotation/i.test(header) ? fmt(v, 1) + "°" : /\bMI\b/.test(header) ? fmt(v, 3)
+  : /position/i.test(header) ? fmt(v, 1) + " mm" : fmt(v) + " mm";
+const missing = (el, what) => { $(el).innerHTML = `<p class="missing">Not computed yet (run ${what}).</p>`; };
+
+function contrastSummary(rows) {
+  const cs = Object.keys(NAMES).filter((c) => rows.some((r) => r.contrast === c));
+  return table(cs.map((c) => {
+    const sel = rows.filter((r) => r.contrast === c);
+    return { c, n: sel.length,
+      mi: median(sel.map((r) => r.mi_after)),
+      sc: median(sel.map((r) => r.self_consistency_mean_mm)),
+      worst: Math.max(...sel.map((r) => r.self_consistency_mean_mm)),
+      nc: sel.filter((r) => !r.converged).length };
+  }), [
+    ["Scan", (r) => NAMES[r.c]],
+    ["Subjects", (r) => r.n],
+    ["Median MI after", (r) => fmt(r.mi, 3)],
+    ["Median self-consistency error", (r) => fmt(r.sc) + " mm"],
+    ["Worst subject", (r) => fmt(r.worst) + " mm"],
+    ["Not converged", (r) => (r.nc ? `<span class="bad">${r.nc}</span>` : "0")],
+  ], false);
+}
+
+async function main() {
+  const info = await (await fetch("data/info.json")).json();
+  $("generated").textContent = info.generated;
+  const regs = info.registrations ?? [];
+  const t2 = regs.filter((r) => r.contrast === "T2w");
+  const loop = Object.fromEntries((info.consistency_loop ?? []).map((r) => [r.subject, r]));
+
+  // Headline
+  const scMed = median(t2.map((r) => r.self_consistency_mean_mm));
+  const loopMed = median(Object.values(loop).map((r) => r.loop_mean_mm));
+  $("headline").innerHTML = `Median error <b>${fmt(loopMed)} mm</b> by the stricter consistency loop and ` +
+    `<b>${fmt(scMed)} mm</b> by self-consistency, over ${t2.length} volunteers. Both are smaller than one 64 mT voxel.`;
+
+  // Main table
+  if (t2.length) {
+    $("mainTable").innerHTML = table(t2, [
+      ["Subject", (r) => r.subject + (r.converged ? "" : " " + notConverged)],
+      ["MI before", (r) => fmt(r.mi_before, 3)],
+      ["MI after", (r) => fmt(r.mi_after, 3), (r) => r.mi_after],
+      ["Self-consistency error, mean", (r) => fmt(r.self_consistency_mean_mm) + " mm", (r) => r.self_consistency_mean_mm],
+      ["Self-consistency error, worst", (r) => fmt(r.self_consistency_max_mm) + " mm", (r) => r.self_consistency_max_mm],
+      ["Loop error, mean", (r) => (loop[r.subject] ? fmt(loop[r.subject].loop_mean_mm) + " mm" : "–"), (r) => loop[r.subject]?.loop_mean_mm],
+    ]);
+  } else missing("mainTable", "all_subjects.py");
+
+  // Consistency loop
+  if (info.consistency_loop) {
+    $("loopTable").innerHTML = table(info.consistency_loop, [
+      ["Subject", (r) => r.subject + (r.converged ? "" : " " + notConverged)],
+      ["Loop error, mean", (r) => fmt(r.loop_mean_mm) + " mm", (r) => r.loop_mean_mm],
+      ["Loop error, worst", (r) => fmt(r.loop_max_mm) + " mm", (r) => r.loop_max_mm],
+      ["3T head motion between T1 and T2, mean", (r) => fmt(r.motion_3t_mean_mm) + " mm", (r) => r.motion_3t_mean_mm],
+      ["3T head rotation between T1 and T2", (r) => fmt(r.motion_3t_rotation_deg, 1) + "°", (r) => r.motion_3t_rotation_deg],
+    ]);
+  } else missing("loopTable", "consistency_loop.py");
+
+  // Contrasts
+  if (regs.some((r) => r.contrast !== "T2w")) {
+    $("contrastSummary").innerHTML = contrastSummary(regs);
+    const subjects = [...new Set(regs.map((r) => r.subject))];
+    const cs = Object.keys(NAMES);
+    const get = (s, c) => regs.find((r) => r.subject === s && r.contrast === c);
+    const cell = (x) => (x ? fmt(x.self_consistency_mean_mm) + " mm" + (x.converged ? "" : " " + notConverged) : "–");
+    $("contrastTable").innerHTML = "<p class='read'>Self-consistency error per subject:</p>" +
+      table(subjects.map((s) => ({ s })), [
+        ["Subject", (r) => r.s],
+        ...cs.map((c) => [`64 mT ${NAMES[c]}`, (r) => cell(get(r.s, c)), (r) => get(r.s, c)?.self_consistency_mean_mm]),
+      ]);
+  } else missing("contrastSummary", "all_subjects.py with all contrasts");
+
+  // Repeat sessions
+  if (info.repeat_sessions) {
+    $("sessionTable").innerHTML = table(info.repeat_sessions, [
+      ["Subject", (r) => r.subject],
+      ["Session", (r) => r.session + (r.converged ? "" : " " + notConverged)],
+      ["Head position change, mean", (r) => fmt(r.head_moved_mean_mm, 1) + " mm", (r) => r.head_moved_mean_mm],
+      ["Head rotation", (r) => fmt(r.head_rotation_deg, 1) + "°", (r) => r.head_rotation_deg],
+      ["Loop error, mean", (r) => fmt(r.loop_mean_mm) + " mm", (r) => r.loop_mean_mm],
+      ["Loop error, worst", (r) => fmt(r.loop_max_mm) + " mm", (r) => r.loop_max_mm],
+    ]);
+    if (info.repeat_sessions.some((r) => !r.converged)) {
+      $("sessionNote").innerHTML = "<b>Not converged:</b> after 20000 iterations, the direct registration of " +
+        "<code>sub-0027</code> session 5 to the 3T T1 was still slowly improving. Faster optimizers converged " +
+        "quickly but onto wrong answers 4-10 mm away, so this pair has many shallow false optima. The slow climb " +
+        "still ends 0.77 mm from the route through session 1.";
+    }
+  } else missing("sessionTable", "repeat_sessions.py");
+
+  // Field strength
+  if (info.field_strength) {
+    const fs = info.field_strength;
+    const cs = Object.keys(NAMES).filter((c) => fs.some((r) => r.contrast === c));
+    const med = (rows, c) => median(rows.filter((r) => r.contrast === c).map((r) => r.self_consistency_mean_mm));
+    $("fieldSummary").innerHTML = table(cs.map((c) => ({ c })), [
+      ["Scan", (r) => NAMES[r.c]],
+      ["64 mT (1.6 × 1.6 × 5 mm), median self-consistency", (r) => fmt(med(regs, r.c)) + " mm"],
+      ["3T low-res (1.38 × 1.38 × 5 mm), median self-consistency", (r) => fmt(med(fs, r.c)) + " mm"],
+      ["Median MI after, 64 mT / 3T low-res", (r) =>
+        fmt(median(regs.filter((x) => x.contrast === r.c).map((x) => x.mi_after)), 3) + " / " +
+        fmt(median(fs.filter((x) => x.contrast === r.c).map((x) => x.mi_after)), 3)],
+    ], false);
+    const subjects = [...new Set(fs.map((r) => r.subject))];
+    const get = (rows, s, c) => rows.find((r) => r.subject === s && r.contrast === c);
+    const cell = (x) => (x ? fmt(x.self_consistency_mean_mm) + " mm" + (x.converged ? "" : " " + notConverged) : "–");
+    $("fieldTable").innerHTML = "<p class='read'>3T low-res self-consistency error per subject:</p>" +
+      table(subjects.map((s) => ({ s })), [
+        ["Subject", (r) => r.s],
+        ...cs.map((c) => [`3T low-res ${NAMES[c]}`, (r) => cell(get(fs, r.s, c)), (r) => get(fs, r.s, c)?.self_consistency_mean_mm]),
+      ]);
+  } else missing("fieldSummary", "field_strength.py");
+}
+
+main().catch((err) => {
+  console.error(err);
+  $("headline").textContent = "Couldn't load data/info.json. Serve this folder over HTTP " +
+    "(python -m http.server -d docs 8000), don't open the file directly.";
+});
+</script>
+</body>
+</html>

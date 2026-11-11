@@ -84,6 +84,15 @@ because it ran out of iterations).
 Full results: `results/all_subjects.csv` and `results/consistency_loop.json`. Contact sheet
 with the 3T outlines on each 64 mT scan: `results/all_subjects_overlay.png`.
 
+### All three 64 mT scans
+
+Each 64 mT session recorded a T2, a FLAIR and a T1. All three were registered to the same
+3T T1 with the same settings, so the differences come from the 64 mT scan alone. Median
+self-consistency error: **T2 0.67 mm, T1 0.73 mm, FLAIR 1.15 mm** (worst subject 1.29, 1.45
+and 1.74 mm). All 33 registrations converged. The T2 registers best, which suits a bedside
+protocol with limited time; the FLAIR, with 1.7 mm in-plane voxels and less contrast between
+tissues, is the weakest. All three can be shown in the viewer.
+
 ### Repeat 64 mT sessions
 
 Five of the volunteers had the 64 mT scan repeated on other days (9 repeat sessions). Their
@@ -96,6 +105,18 @@ iterations its mutual information was still slowly rising. Faster optimizers con
 quickly but onto wrong answers 4-10 mm away, so this pair has many shallow false optima; the
 slow climb still ends 0.77 mm from the route through session 1. Full table:
 `results/repeat_sessions.json`.
+
+### Additional check: field strength or voxel size?
+
+The 3T session also recorded each contrast at a low resolution close to the 64 mT one
+(1.38 x 1.38 x 5 mm). Run through exactly the same pipeline, those 3T low-res scans register
+to the 3T T1 much more consistently: median self-consistency **0.07-0.29 mm**, against
+**0.67-1.15 mm** for the 64 mT scans. So coarse voxels alone don't explain the 64 mT error; the
+weaker signal and different contrast at 64 mT add to it. This control is easier in one more
+way: the 3T scans come from the same scanner and session as the 3T T1 (the low-res T1 is even
+the same contrast). Results: `results/field_strength.json`.
+
+All tables, per subject: the viewer's **More info** page.
 
 ### What went wrong first
 
@@ -122,9 +143,13 @@ minutes including the self-consistency check.
 [jacobstoelting.github.io/mri_lowfield_registration](https://jacobstoelting.github.io/mri_lowfield_registration/)
 (built on [NiiVue](https://github.com/niivue/niivue), source in `docs/`)
 
-- **Subject menu.** Any of the 11 volunteers (with their self-consistency error). The
-  choice, and the before/after and view settings, stay in the address bar, so a copied
-  link reopens the same view.
+- **Subject and 64 mT scan menus.** Any of the 11 volunteers, and any of their three 64 mT
+  scans (T2, FLAIR or T1), each registered to the same 3T T1. The subject menu shows each
+  volunteer's self-consistency error for the chosen scan. The choices, and the before/after
+  and view settings, stay in the address bar, so a copied link reopens the same view.
+- **More info** (button at the top right) opens a page with every results table: the main
+  result, the consistency loop, the three 64 mT scans, the repeat sessions and the
+  field-strength check. The page builds them from the pipeline's output (`docs/data/info.json`).
 - **Side by side, linked.** The 64 mT scan on the left and the 3T scan on the right, both in
   grayscale. Clicking, scrolling, zooming or rotating in one view does the same in the
   other, so the crosshair always points at the same anatomy in both. That is what the
@@ -133,8 +158,9 @@ minutes including the self-consistency check.
   scan (3D Canny), and edges work across contrasts even though T1 and T2 show tissue almost
   oppositely (fluid is dark on T1 and bright on T2). In **After** they trace the 64 mT
   ventricles, brain and skull; in **Before** they visibly miss. **Flicker** alternates the
-  two. Toggle the outlines with the button or the O key. They start off in "3 planes + 3D",
-  where they would also cover the 64 mT 3D render.
+  two. The outlines start on; toggle them with the button or the O key. The viewer opens on
+  "3 planes". In "3 planes + 3D" the outlines also cover the 64 mT 3D render, so turn them
+  off there to see it.
 - **The blockiness is real.** The 64 mT scan is shown exactly as recorded: 5 mm slices,
   which look like stair-steps in the coronal and sagittal views. It is moved into place by
   rewriting its file header (position and orientation), not by resampling, so nothing is
@@ -187,10 +213,12 @@ pip install -r requirements.txt
 python download_data.py      # 1.4 GB from Zenodo, unpacked to data/leiden/
 python register.py           # one subject (sub-0035), 20-30 seconds; writes results/
 python smoke_test.py         # optional: checks sub-0035 still registers (MI up, error under 1.5 mm)
-python all_subjects.py       # all 11 paired subjects, about 25 minutes
+python all_subjects.py       # 11 subjects x 3 64 mT scans, about an hour; skips finished ones (--all redoes them)
 python consistency_loop.py   # stricter accuracy check through the 3T T2, about 10 minutes
 python repeat_sessions.py    # repeat 64 mT sessions: head position and a second loop, about 25 minutes
+python field_strength.py     # additional check with the 3T low-res scans, about 45 minutes
 python export_viewer.py      # writes every subject's viewer files to docs/data/ (needs all_subjects.py first)
+python export_info.py        # collects all results tables for the More info page
 python -m http.server -d docs 8000   # optional: preview the viewer at http://localhost:8000
 ```
 
@@ -203,13 +231,16 @@ top of `register.py`.
 |---|---|
 | `download_data.py` | Downloads and unpacks the Zenodo dataset into `data/` |
 | `register.py` | Loads, cleans and registers the scans; self-consistency test; writes `results/` |
-| `all_subjects.py` | Runs `register.py`'s pipeline for all 11 paired subjects; summary table, contact sheet, and each subject's transform (`results/transforms/`) |
+| `all_subjects.py` | Runs `register.py`'s pipeline for all 11 paired subjects and all three 64 mT scans; summary table, contact sheet, and each transform (`results/transforms/`) |
 | `consistency_loop.py` | Consistency loop: registers each 64 mT T2 to the 3T T2 too, and the 3T T2 to the 3T T1, and checks the two routes agree |
 | `repeat_sessions.py` | Registers each repeat 64 mT session to session 1 and checks the loop through it to the 3T T1 |
+| `field_strength.py` | Additional check: registers the 3T low-res scans (64 mT voxel size) with the same pipeline |
+| `export_info.py` | Collects every results table into `docs/data/info.json` for the More info page |
 | `smoke_test.py` | Quick check after code changes: registers sub-0035 and fails if the result got worse |
 | `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
-| `export_viewer.py` | Writes each subject's scans and 3T outlines to `docs/data/sub-XXXX/`, plus the subject list |
+| `export_viewer.py` | Writes each subject's 3T scan, 3T outlines and three 64 mT scans to `docs/data/sub-XXXX/`, plus the subject list |
 | `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
+| `docs/info.html` | The More info page: all results tables |
 | `results/` | Figures, `results.json`, and the transform `t1_to_lowfield.tfm` |
 
 `register.py` also keeps `simulate_low_field`, which makes a fake low-field scan with a
@@ -217,8 +248,9 @@ known movement. It's unused in the main pipeline and is there for a planned robu
 
 ## Limits and next steps
 
-- **11 subjects, one contrast.** All paired volunteers are covered, but only with the 64 mT
-  T2 from their first session. The 64 mT T1 and FLAIR, and repeat sessions, are untested.
+- **11 healthy volunteers.** All paired volunteers, all three 64 mT anatomical scans and all
+  repeat sessions are covered, but no patients. Lesions, swelling or movement could make
+  registration harder.
 - **Rigid only.** It doesn't model low-field geometric distortion. Also not sure if significant
   brain changes would alter results.
 - **Neither check is ground truth.** Self-consistency shows the method lands in the same

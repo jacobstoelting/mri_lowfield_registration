@@ -1,0 +1,1487 @@
+[
+  {
+    "subject": "sub-0011",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5163,
+      "before": 0.5163,
+      "after": 0.5535
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5535,
+      "MOMENTS": 0.5535
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.28,
+      -0.16,
+      0.11
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.2,
+        "after": 0.16
+      },
+      "max_error_mm": {
+        "before": 26.73,
+        "after": 0.36
+      }
+    },
+    "iterations": 388,
+    "converged": true
+  },
+  {
+    "subject": "sub-0011",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5355,
+      "before": 0.5355,
+      "after": 0.5597
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5597,
+      "MOMENTS": 0.5597
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.3,
+      -0.09,
+      0.18
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.36,
+        "after": 0.25
+      },
+      "max_error_mm": {
+        "before": 26.64,
+        "after": 0.56
+      }
+    },
+    "iterations": 357,
+    "converged": true
+  },
+  {
+    "subject": "sub-0011",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.7731,
+      "before": 0.7731,
+      "after": 0.8905
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.8904,
+      "MOMENTS": 0.8905
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.29,
+      0.05,
+      0.22
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 16.83,
+        "after": 0.05
+      },
+      "max_error_mm": {
+        "before": 26.43,
+        "after": 0.11
+      }
+    },
+    "iterations": 103,
+    "converged": true
+  },
+  {
+    "subject": "sub-0015",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.437,
+      "before": 0.437,
+      "after": 0.5133
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5133,
+      "MOMENTS": 0.5133
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.48,
+      1.31,
+      -0.62
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.21,
+        "after": 0.19
+      },
+      "max_error_mm": {
+        "before": 26.0,
+        "after": 0.34
+      }
+    },
+    "iterations": 202,
+    "converged": true
+  },
+  {
+    "subject": "sub-0015",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.4405,
+      "before": 0.4405,
+      "after": 0.5242
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5242,
+      "MOMENTS": 0.5242
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.24,
+      0.57,
+      0.48
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.4,
+        "after": 0.13
+      },
+      "max_error_mm": {
+        "before": 26.43,
+        "after": 0.16
+      }
+    },
+    "iterations": 297,
+    "converged": true
+  },
+  {
+    "subject": "sub-0015",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5337,
+      "before": 0.5337,
+      "after": 0.6799
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.6799,
+      "MOMENTS": 0.6799
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.07,
+      0.52,
+      0.46
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 16.9,
+        "after": 0.03
+      },
+      "max_error_mm": {
+        "before": 26.38,
+        "after": 0.07
+      }
+    },
+    "iterations": 109,
+    "converged": true
+  },
+  {
+    "subject": "sub-0023",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5419,
+      "before": 0.5419,
+      "after": 0.5575
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.5575,
+      "MOMENTS": 0.5575
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.93,
+      0.2,
+      0.4
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.59,
+        "after": 0.59
+      },
+      "max_error_mm": {
+        "before": 27.81,
+        "after": 0.68
+      }
+    },
+    "iterations": 2538,
+    "converged": true
+  },
+  {
+    "subject": "sub-0023",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5333,
+      "before": 0.5333,
+      "after": 0.5485
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5485,
+      "MOMENTS": 0.5485
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.33,
+      0.18,
+      0.53
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.63,
+        "after": 0.31
+      },
+      "max_error_mm": {
+        "before": 27.78,
+        "after": 0.47
+      }
+    },
+    "iterations": 375,
+    "converged": true
+  },
+  {
+    "subject": "sub-0023",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.7667,
+      "before": 0.7667,
+      "after": 0.8066
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.8066,
+      "MOMENTS": 0.8066
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.57,
+      -0.02,
+      0.32
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.49,
+        "after": 0.11
+      },
+      "max_error_mm": {
+        "before": 27.88,
+        "after": 0.22
+      }
+    },
+    "iterations": 87,
+    "converged": true
+  },
+  {
+    "subject": "sub-0025",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.452,
+      "before": 0.452,
+      "after": 0.4651
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.4651,
+      "MOMENTS": 0.4651
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.39,
+      0.05,
+      -0.2
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.68,
+        "after": 0.06
+      },
+      "max_error_mm": {
+        "before": 26.82,
+        "after": 0.14
+      }
+    },
+    "iterations": 462,
+    "converged": true
+  },
+  {
+    "subject": "sub-0025",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.4629,
+      "before": 0.4629,
+      "after": 0.4689
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.4689,
+      "MOMENTS": 0.4689
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      1.15,
+      0.23,
+      -0.1
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.75,
+        "after": 0.22
+      },
+      "max_error_mm": {
+        "before": 27.11,
+        "after": 0.45
+      }
+    },
+    "iterations": 794,
+    "converged": true
+  },
+  {
+    "subject": "sub-0025",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.6363,
+      "before": 0.6363,
+      "after": 0.7039
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.7039,
+      "MOMENTS": 0.7039
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.46,
+      -0.05,
+      -0.28
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.46,
+        "after": 0.07
+      },
+      "max_error_mm": {
+        "before": 27.04,
+        "after": 0.14
+      }
+    },
+    "iterations": 98,
+    "converged": true
+  },
+  {
+    "subject": "sub-0027",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5131,
+      "before": 0.5131,
+      "after": 0.534
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.534,
+      "MOMENTS": 0.534
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.78,
+      0.06,
+      -0.07
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.56,
+        "after": 0.82
+      },
+      "max_error_mm": {
+        "before": 27.96,
+        "after": 1.21
+      }
+    },
+    "iterations": 287,
+    "converged": true
+  },
+  {
+    "subject": "sub-0027",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5356,
+      "before": 0.5356,
+      "after": 0.5453
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5453,
+      "MOMENTS": 0.5453
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.01,
+      0.07,
+      -0.14
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.65,
+        "after": 0.56
+      },
+      "max_error_mm": {
+        "before": 28.01,
+        "after": 1.01
+      }
+    },
+    "iterations": 529,
+    "converged": true
+  },
+  {
+    "subject": "sub-0027",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.708,
+      "before": 0.708,
+      "after": 0.7702
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.7702,
+      "MOMENTS": 0.7702
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.98,
+      0.13,
+      -0.01
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.5,
+        "after": 0.11
+      },
+      "max_error_mm": {
+        "before": 28.21,
+        "after": 0.17
+      }
+    },
+    "iterations": 62,
+    "converged": true
+  },
+  {
+    "subject": "sub-0035",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5706,
+      "before": 0.5706,
+      "after": 0.5962
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5962,
+      "MOMENTS": 0.5962
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.53,
+      0.03,
+      0.21
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 18.05,
+        "after": 0.33
+      },
+      "max_error_mm": {
+        "before": 28.49,
+        "after": 0.69
+      }
+    },
+    "iterations": 179,
+    "converged": true
+  },
+  {
+    "subject": "sub-0035",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5398,
+      "before": 0.5398,
+      "after": 0.5566
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.5566,
+      "MOMENTS": 0.5566
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.03,
+      0.11,
+      0.12
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 18.0,
+        "after": 0.3
+      },
+      "max_error_mm": {
+        "before": 28.31,
+        "after": 0.66
+      }
+    },
+    "iterations": 393,
+    "converged": true
+  },
+  {
+    "subject": "sub-0035",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.776,
+      "before": 0.776,
+      "after": 0.8545
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.8545,
+      "MOMENTS": 0.8544
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.29,
+      0.07,
+      0.12
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.84,
+        "after": 0.08
+      },
+      "max_error_mm": {
+        "before": 28.36,
+        "after": 0.19
+      }
+    },
+    "iterations": 126,
+    "converged": true
+  },
+  {
+    "subject": "sub-0046",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5386,
+      "before": 0.5386,
+      "after": 0.5449
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.5449,
+      "MOMENTS": 0.5449
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.59,
+      -0.25,
+      -0.29
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.6,
+        "after": 0.33
+      },
+      "max_error_mm": {
+        "before": 27.69,
+        "after": 0.48
+      }
+    },
+    "iterations": 146,
+    "converged": true
+  },
+  {
+    "subject": "sub-0046",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5216,
+      "before": 0.5216,
+      "after": 0.5316
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.5316,
+      "MOMENTS": 0.5316
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.2,
+      -0.02,
+      -0.11
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.56,
+        "after": 0.29
+      },
+      "max_error_mm": {
+        "before": 27.77,
+        "after": 0.39
+      }
+    },
+    "iterations": 474,
+    "converged": true
+  },
+  {
+    "subject": "sub-0046",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.7831,
+      "before": 0.7831,
+      "after": 0.8018
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.8018,
+      "MOMENTS": 0.8018
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.43,
+      -0.01,
+      -0.01
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.41,
+        "after": 0.07
+      },
+      "max_error_mm": {
+        "before": 27.31,
+        "after": 0.08
+      }
+    },
+    "iterations": 77,
+    "converged": true
+  },
+  {
+    "subject": "sub-0047",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.4796,
+      "before": 0.4796,
+      "after": 0.5027
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5027,
+      "MOMENTS": 0.5027
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -1.13,
+      0.44,
+      0.76
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.19,
+        "after": 0.13
+      },
+      "max_error_mm": {
+        "before": 26.29,
+        "after": 0.17
+      }
+    },
+    "iterations": 163,
+    "converged": true
+  },
+  {
+    "subject": "sub-0047",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.4771,
+      "before": 0.4771,
+      "after": 0.4926
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.4926,
+      "MOMENTS": 0.4926
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.23,
+      0.32,
+      0.55
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.31,
+        "after": 0.32
+      },
+      "max_error_mm": {
+        "before": 26.06,
+        "after": 0.66
+      }
+    },
+    "iterations": 380,
+    "converged": true
+  },
+  {
+    "subject": "sub-0047",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.6528,
+      "before": 0.6528,
+      "after": 0.7001
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.7001,
+      "MOMENTS": 0.7001
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -1.08,
+      0.47,
+      0.35
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 16.88,
+        "after": 0.05
+      },
+      "max_error_mm": {
+        "before": 25.68,
+        "after": 0.1
+      }
+    },
+    "iterations": 155,
+    "converged": true
+  },
+  {
+    "subject": "sub-0048",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.4734,
+      "before": 0.4734,
+      "after": 0.5034
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.5034,
+      "MOMENTS": 0.5034
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.62,
+      0.74,
+      0.08
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.46,
+        "after": 0.16
+      },
+      "max_error_mm": {
+        "before": 27.62,
+        "after": 0.25
+      }
+    },
+    "iterations": 1189,
+    "converged": true
+  },
+  {
+    "subject": "sub-0048",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.4608,
+      "before": 0.4608,
+      "after": 0.4789
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.4789,
+      "MOMENTS": 0.4789
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.77,
+      0.75,
+      0.18
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.5,
+        "after": 0.11
+      },
+      "max_error_mm": {
+        "before": 27.34,
+        "after": 0.21
+      }
+    },
+    "iterations": 941,
+    "converged": true
+  },
+  {
+    "subject": "sub-0048",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.6322,
+      "before": 0.6322,
+      "after": 0.7163
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.7163,
+      "MOMENTS": 0.7163
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      0.45,
+      0.68,
+      0.11
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.06,
+        "after": 0.06
+      },
+      "max_error_mm": {
+        "before": 27.47,
+        "after": 0.12
+      }
+    },
+    "iterations": 83,
+    "converged": true
+  },
+  {
+    "subject": "sub-0064",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5161,
+      "before": 0.5161,
+      "after": 0.5248
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.5248,
+      "MOMENTS": 0.5248
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.24,
+      0.11,
+      -0.01
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.46,
+        "after": 0.85
+      },
+      "max_error_mm": {
+        "before": 26.98,
+        "after": 1.12
+      }
+    },
+    "iterations": 389,
+    "converged": true
+  },
+  {
+    "subject": "sub-0064",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.5314,
+      "before": 0.5314,
+      "after": 0.5318
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.5318,
+      "MOMENTS": 0.5317
+    },
+    "starts_differ_mm": 0.05,
+    "estimated_rotation_deg": [
+      0.66,
+      0.21,
+      0.05
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.5,
+        "after": 0.41
+      },
+      "max_error_mm": {
+        "before": 27.01,
+        "after": 0.48
+      }
+    },
+    "iterations": 491,
+    "converged": true
+  },
+  {
+    "subject": "sub-0064",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.7006,
+      "before": 0.7006,
+      "after": 0.74
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.74,
+      "MOMENTS": 0.7399
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.01,
+      0.11,
+      0.05
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.26,
+        "after": 0.14
+      },
+      "max_error_mm": {
+        "before": 26.98,
+        "after": 0.18
+      }
+    },
+    "iterations": 130,
+    "converged": true
+  },
+  {
+    "subject": "sub-0066",
+    "contrast": "T2w",
+    "fixed": "3T low-res T2w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.4559,
+      "before": 0.4559,
+      "after": 0.4851
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.4851,
+      "MOMENTS": 0.4851
+    },
+    "starts_differ_mm": 0.0,
+    "estimated_rotation_deg": [
+      -0.61,
+      -0.01,
+      0.03
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.62,
+        "after": 0.23
+      },
+      "max_error_mm": {
+        "before": 27.65,
+        "after": 0.33
+      }
+    },
+    "iterations": 2227,
+    "converged": true
+  },
+  {
+    "subject": "sub-0066",
+    "contrast": "FLAIR",
+    "fixed": "3T low-res FLAIR (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.4981,
+      "before": 0.4981,
+      "after": 0.5097
+    },
+    "start_used": "GEOMETRY",
+    "start_mi": {
+      "GEOMETRY": 0.5097,
+      "MOMENTS": 0.5091
+    },
+    "starts_differ_mm": 0.14,
+    "estimated_rotation_deg": [
+      -0.17,
+      0.02,
+      0.27
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.66,
+        "after": 0.19
+      },
+      "max_error_mm": {
+        "before": 27.63,
+        "after": 0.26
+      }
+    },
+    "iterations": 1755,
+    "converged": true
+  },
+  {
+    "subject": "sub-0066",
+    "contrast": "T1w",
+    "fixed": "3T low-res T1w (Philips Achieva)",
+    "moving": "3T T1 (Philips Achieva), 1 mm",
+    "scanner_frame_offset_mm": 0.0,
+    "mutual_information": {
+      "raw_scanner_coordinates": 0.6588,
+      "before": 0.6588,
+      "after": 0.7432
+    },
+    "start_used": "MOMENTS",
+    "start_mi": {
+      "GEOMETRY": 0.7432,
+      "MOMENTS": 0.7432
+    },
+    "starts_differ_mm": 0.01,
+    "estimated_rotation_deg": [
+      -0.39,
+      -0.01,
+      0.27
+    ],
+    "self_consistency": {
+      "known_rotation_deg": [
+        6.0,
+        -4.0,
+        9.0
+      ],
+      "known_shift_mm": [
+        7.0,
+        -12.0,
+        5.0
+      ],
+      "mean_error_mm": {
+        "before": 17.28,
+        "after": 0.05
+      },
+      "max_error_mm": {
+        "before": 27.59,
+        "after": 0.06
+      }
+    },
+    "iterations": 115,
+    "converged": true
+  }
+]
