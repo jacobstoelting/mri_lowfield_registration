@@ -23,15 +23,17 @@
            border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
            font-variant-numeric: tabular-nums; }
   footer b { color: var(--text); font-weight: 600; }
-  #loc { font-family: var(--mono); font-size: 11.5px; }
+  #loc { font-family: var(--mono); font-size: 11.5px; white-space: pre; }
   #stats { margin-left: auto; }
-  /* Slice bar: shown only in the single-plane views */
-  .slicebar { display: flex; align-items: center; gap: 14px; margin: 0 8px; padding: 8px 14px;
-              border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  /* Slice bar: one slider per 2D plane on screen */
+  .slicebar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; margin: 0 8px;
+              padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius);
+              background: var(--surface); }
   .slicebar[hidden] { display: none; }
-  .slicebar .label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
-                     color: var(--faint); min-width: 64px; }
-  .slicebar .num { font: 12px var(--mono); color: var(--text); min-width: 78px; text-align: right; }
+  .slicerow { display: flex; align-items: center; gap: 12px; flex: 1 1 240px; min-width: 200px; }
+  .slicerow .label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+                     color: var(--faint); min-width: 62px; }
+  .slicerow .num { font: 12px var(--mono); color: var(--text); min-width: 66px; text-align: right; }
   .slicebar .hint { font-size: 12px; color: var(--faint); white-space: nowrap; }
   input[type="range"] { flex: 1; appearance: none; -webkit-appearance: none; height: 4px; margin: 0;
                         border-radius: 2px; cursor: pointer;
@@ -73,15 +75,14 @@
   </div>
 
   <div class="field">
-    <label for="view">View</label>
-    <select id="view">
-      <option value="mpr">3 planes</option>
-      <option value="mpr3d">3 planes + 3D</option>
-      <option value="0">Axial</option>
-      <option value="1">Coronal</option>
-      <option value="2">Sagittal</option>
-      <option value="4">3D render</option>
-    </select>
+    <span class="label">Views</span>
+    <div class="segmented" id="views" role="group" aria-label="Views to show"
+         title="Pick any combination; at least one stays on">
+      <button data-view="axial">Axial</button>
+      <button data-view="coronal">Coronal</button>
+      <button data-view="sagittal">Sagittal</button>
+      <button data-view="3d">3D</button>
+    </div>
   </div>
 
   <button id="btnEdges" class="on" title="3T outlines on the 64 mT scan (key: O)">
@@ -111,17 +112,11 @@
   </section>
 </main>
 
-<div class="slicebar" id="slicebar" hidden>
-  <span class="label" id="sliceAxis">Axial</span>
-  <input type="range" id="slice" min="0" max="100" step="1" value="50"
-         aria-label="Slice" title="Drag, or focus and use the arrow keys">
-  <span class="num" id="sliceNum">– / –</span>
-  <span class="hint">or scroll on the image</span>
-</div>
+<div class="slicebar" id="slicebar" hidden></div>
 
 <footer>
   <span id="status">Loading…</span>
-  <span id="loc"></span>
+  <span id="loc" title="Crosshair position in the 3T scanner's coordinates (x = left-right, y = back-front, z = foot-head) and the slice in each plane"></span>
   <span id="stats"></span>
 </footer>
 
@@ -158,17 +153,31 @@ for (const nv of [nvLow, nvT1]) {
 
 let showAfter = true, edgesOn = true, flickerTimer = null;
 
-// Outlines are on by default. The default view is "3 planes": in "3 planes + 3D" they also
-// cover the 64 mT render in a yellow skin, because a NiiVue view holds all its layers in one 3D
-// texture and can't hide them in the 3D tile alone. The button / O key turns them off there.
-const DEFAULT_VIEW = "mpr";
+// Which views are on screen: any combination of the three planes and the 3D render.
+// Outlines are on by default. With 3D on screen they also cover the 64 mT render in a yellow
+// skin, because a NiiVue view holds all its layers in one 3D texture and can't hide them in the
+// 3D tile alone. The button / O key turns them off there.
+// NiiVue keeps volumes in RAS order: x = left-right (sagittal), y = back-front (coronal),
+// z = foot-head (axial); `axis` is the one each plane steps through.
+const PLANES = [
+  { key: "axial",    type: SLICE_TYPE.AXIAL,    axis: 2, name: "Axial" },
+  { key: "coronal",  type: SLICE_TYPE.CORONAL,  axis: 1, name: "Coronal" },
+  { key: "sagittal", type: SLICE_TYPE.SAGITTAL, axis: 0, name: "Sagittal" },
+  { key: "3d",       type: SLICE_TYPE.RENDER,               name: "3D" },
+];
+const DEFAULT_VIEWS = ["axial", "coronal", "sagittal"];
+// Links made before the view picker used ?view=...
+const LEGACY_VIEW = { mpr: DEFAULT_VIEWS, mpr3d: [...DEFAULT_VIEWS, "3d"], 0: ["axial"],
+                      1: ["coronal"], 2: ["sagittal"], 4: ["3d"] };
+let views = new Set(DEFAULT_VIEWS);
+const shownPlanes = () => PLANES.filter((p) => views.has(p.key));
 const CONTRAST_NAMES = { T2w: "T2", FLAIR: "FLAIR", T1w: "T1" };
 
 function applyVisibility() {
   nvLow.setOpacity(BEFORE, showAfter ? 0 : 1);
   nvLow.setOpacity(AFTER, showAfter ? 1 : 0);
   // In 3D the outlines become a cluttered yellow skin, so they only show on the 2D slices.
-  nvLow.setOpacity(EDGES, edgesOn && $("view").value !== "4" ? 1 : 0);
+  nvLow.setOpacity(EDGES, edgesOn && shownPlanes().some((p) => p.axis !== undefined) ? 1 : 0);
   $("btnBefore").classList.toggle("on", !showAfter);
   $("btnAfter").classList.toggle("on", showAfter);
   $("btnEdges").classList.toggle("on", edgesOn);
@@ -182,7 +191,9 @@ function updateUrl() {
   if ($("contrast").value === defaultContrast) q.delete("contrast"); else q.set("contrast", $("contrast").value);
   if (showAfter) q.delete("lf"); else q.set("lf", "before");
   q.delete("outlines");   // not kept in the link: outlines always start on
-  if ($("view").value === DEFAULT_VIEW) q.delete("view"); else q.set("view", $("view").value);
+  q.delete("view");
+  const keys = shownPlanes().map((p) => p.key).join(",");
+  if (keys === DEFAULT_VIEWS.join(",")) q.delete("views"); else q.set("views", keys);
   history.replaceState(null, "", "?" + q.toString());
 }
 
@@ -193,19 +204,33 @@ function stopFlicker() {
   $("btnFlicker").classList.remove("on");
 }
 
+// Tile positions (left, top, width, height as fractions of the view) for n views.
+function tiles(n, aspect) {
+  const grid = [[0, 0, 0.5, 0.5], [0.5, 0, 0.5, 0.5], [0, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]];
+  if (n === 2) return aspect >= 1 ? [[0, 0, 0.5, 1], [0.5, 0, 0.5, 1]] : [[0, 0, 1, 0.5], [0, 0.5, 1, 0.5]];
+  if (n === 3 && aspect >= 1.8) return [[0, 0, 1 / 3, 1], [1 / 3, 0, 1 / 3, 1], [2 / 3, 0, 1 / 3, 1]];
+  return grid.slice(0, n);
+}
+
 function applyView() {
-  const v = $("view").value;
+  const list = shownPlanes();
+  const box = $("glLow").parentElement;
+  const pos = tiles(list.length, box.clientWidth / Math.max(1, box.clientHeight));
   for (const nv of [nvLow, nvT1]) {
-    nv.setMultiplanarLayout(MULTIPLANAR_GRID);   // same 2x2 layout in both, so planes line up
-    if (v === "mpr3d" || v === "mpr") {
-      nv.opts.multiplanarShowRender = v === "mpr3d" ? SHOW_RENDER.ALWAYS : SHOW_RENDER.NEVER;
-      nv.setSliceType(SLICE_TYPE.MULTIPLANAR);
+    if (list.length === 1) {
+      nv.clearCustomLayout();
+      nv.setSliceType(list[0].type);
     } else {
-      nv.setSliceType(Number(v));
+      nv.setSliceType(SLICE_TYPE.MULTIPLANAR);
+      nv.setCustomLayout(list.map((p, i) => ({ sliceType: p.type, position: pos[i] })));
     }
   }
+  for (const b of $("views").querySelectorAll("button")) {
+    b.classList.toggle("on", views.has(b.dataset.view));
+    b.setAttribute("aria-pressed", views.has(b.dataset.view));
+  }
   applyVisibility();
-  updateSliceBar();
+  buildSliceBar();
 }
 
 $("btnBefore").onclick = () => { stopFlicker(); setShowAfter(false); };
@@ -216,48 +241,70 @@ $("btnFlicker").onclick = () => {
   flickerTimer = setInterval(() => setShowAfter(!showAfter), 600);
 };
 $("btnEdges").onclick = () => { edgesOn = !edgesOn; applyVisibility(); };
-$("view").onchange = () => applyView();
+for (const b of $("views").querySelectorAll("button")) {
+  b.onclick = () => {
+    const k = b.dataset.view;
+    if (views.has(k) && views.size === 1) return;   // keep at least one view
+    if (views.has(k)) views.delete(k); else views.add(k);
+    applyView();
+  };
+}
+// Two or three tiles are laid out by the panel's shape, so redo the layout after a resize.
+let resizeTimer = null;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(applyView, 150); });
 document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "SELECT") return;
   if (e.key === "o" || e.key === "O") $("btnEdges").click();
 });
 
-// Slice bar for the single-plane views. Both views share the same base grid (the 1 mm 3T
-// scan), so one fractional crosshair position means the same slice in both. NiiVue keeps
-// volumes in RAS order: x = left-right (sagittal), y = back-front (coronal), z = foot-head (axial).
-const SLICE_AXIS = { "0": [2, "Axial"], "1": [1, "Coronal"], "2": [0, "Sagittal"] };
+// Slice bar: one slider per 2D plane on screen. Both views share the same base grid (the 1 mm
+// 3T scan), so one fractional crosshair position means the same slice in both.
+const sliceCount = (axis) => nvLow.volumes[0]?.dimsRAS?.[axis + 1];
+const sliceIndex = (axis, n) =>
+  Math.min(n - 1, Math.max(0, Math.round(nvLow.scene.crosshairPos[axis] * n - 0.5)));
 
-function sliceInfo() {
-  const a = SLICE_AXIS[$("view").value];
-  const n = nvLow.volumes[0]?.dimsRAS?.[a?.[0] + 1];
-  return a && n ? { axis: a[0], name: a[1], n } : null;
-}
-
-function updateSliceBar() {
-  const s = sliceInfo();
-  $("slicebar").hidden = !s;
-  if (!s) return;
-  const i = Math.min(s.n - 1, Math.max(0, Math.round(nvLow.scene.crosshairPos[s.axis] * s.n - 0.5)));
-  $("sliceAxis").textContent = s.name;
-  $("slice").max = s.n - 1;
-  $("slice").value = i;
-  $("slice").style.setProperty("--pos", `${(100 * i) / Math.max(1, s.n - 1)}%`);
-  $("sliceNum").textContent = `${i + 1} / ${s.n}`;
-}
-
-$("slice").oninput = () => {
-  const s = sliceInfo();
-  if (!s) return;
-  const frac = (Number($("slice").value) + 0.5) / s.n;   // middle of the chosen slice
-  for (const nv of [nvLow, nvT1]) {
-    nv.scene.crosshairPos[s.axis] = frac;
-    nv.drawScene();
+function buildSliceBar() {
+  const planes = shownPlanes().filter((p) => p.axis !== undefined);
+  $("slicebar").hidden = !planes.length;
+  $("slicebar").innerHTML = planes.map((p) =>
+    `<div class="slicerow"><span class="label">${p.name}</span>` +
+    `<input type="range" min="0" step="1" data-axis="${p.axis}" aria-label="${p.name} slice"` +
+    ` title="Drag, or click and use the arrow keys"><span class="num"></span></div>`).join("") +
+    '<span class="hint">or scroll on the image</span>';
+  for (const input of $("slicebar").querySelectorAll("input")) {
+    input.oninput = () => {
+      const axis = Number(input.dataset.axis), n = sliceCount(axis);
+      if (!n) return;
+      for (const nv of [nvLow, nvT1]) {
+        nv.scene.crosshairPos[axis] = (Number(input.value) + 0.5) / n;   // middle of the slice
+        nv.drawScene();
+      }
+      updateLocation();
+    };
   }
-  nvLow.createOnLocationChange?.();   // refresh the coordinate readout
-  updateSliceBar();
-};
+  updateLocation();
+}
 
-const showLoc = (data) => { $("loc").textContent = data.string ?? ""; updateSliceBar(); };
+// Footer readout and slider positions, from the shared crosshair.
+function updateLocation() {
+  if (!nvLow.volumes.length) return;
+  for (const input of $("slicebar").querySelectorAll("input")) {
+    const axis = Number(input.dataset.axis), n = sliceCount(axis);
+    if (!n) continue;
+    const i = sliceIndex(axis, n);
+    input.max = n - 1;
+    input.value = i;
+    input.style.setProperty("--pos", `${(100 * i) / Math.max(1, n - 1)}%`);
+    input.nextElementSibling.textContent = `${i + 1} / ${n}`;
+  }
+  const mm = nvLow.frac2mm(nvLow.scene.crosshairPos);
+  const num = (v) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(1);
+  const slices = PLANES.filter((p) => p.axis !== undefined)
+    .map((p) => `${p.name.toLowerCase()} ${sliceIndex(p.axis, sliceCount(p.axis)) + 1}`).join(" · ");
+  $("loc").textContent = `x ${num(mm[0])}  y ${num(mm[1])}  z ${num(mm[2])} mm  ·  slice ${slices}`;
+}
+
+const showLoc = () => updateLocation();
 nvLow.onLocationChange = showLoc;
 nvT1.onLocationChange = showLoc;
 
@@ -349,10 +396,11 @@ async function main() {
   for (const r of subjects) $("subject").append(new Option(r.subject, r.subject));
   for (const c of list.contrasts) $("contrast").append(new Option(CONTRAST_NAMES[c], c));
 
-  // Optional URL settings, e.g. index.html?subject=sub-0046&contrast=FLAIR&lf=before&view=2
+  // Optional URL settings, e.g. index.html?subject=sub-0046&contrast=FLAIR&lf=before&views=axial,3d
   const q = new URLSearchParams(location.search);
-  $("view").value = q.get("view") ?? DEFAULT_VIEW;
-  if (!$("view").value) $("view").value = DEFAULT_VIEW;   // unknown value in the link
+  const wanted = q.has("views") ? q.get("views").split(",") : LEGACY_VIEW[q.get("view")] ?? DEFAULT_VIEWS;
+  views = new Set(wanted.filter((k) => PLANES.some((p) => p.key === k)));
+  if (!views.size) views = new Set(DEFAULT_VIEWS);
   showAfter = q.get("lf") !== "before";
   let subject = q.get("subject"), contrast = q.get("contrast");
   if (!subjects.some((r) => r.subject === subject)) subject = list.default;

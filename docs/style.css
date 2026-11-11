@@ -33,7 +33,7 @@ code { font: 0.92em var(--mono); color: var(--text); background: var(--surface-2
 
 /* ---- Top bar ---------------------------------------------------------------------------- */
 .topbar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
   padding: 10px 16px;
   background: rgba(9, 9, 11, 0.82);
   backdrop-filter: blur(12px);
@@ -44,6 +44,9 @@ code { font: 0.92em var(--mono); color: var(--text); background: var(--surface-2
 .brand b { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
 .brand span { font-size: 12px; color: var(--muted); }
 .spacer { flex: 1; }
+/* Keep the top bar on one line on laptop screens: drop the subtitle, then the small labels */
+@media (max-width: 1640px) { .brand span { display: none; } }
+@media (max-width: 1360px) { .topbar .field > label, .topbar .field > .label { display: none; } }
 
 /* A labelled control: small caps label above or beside the control */
 .field { display: flex; align-items: center; gap: 8px; }
@@ -73,7 +76,7 @@ button.on { background: var(--accent); border-color: var(--accent); color: #000;
 /* Segmented control: buttons joined in one pill */
 .segmented { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line-strong);
              border-radius: 10px; background: var(--surface); }
-.segmented button { border: 0; border-radius: 7px; padding: 6px 12px; color: var(--muted); }
+.segmented button { border: 0; border-radius: 7px; padding: 6px 10px; color: var(--muted); }
 .segmented button:hover { background: var(--surface-2); color: var(--text); }
 .segmented button.on { background: var(--accent); color: #000; }
 
