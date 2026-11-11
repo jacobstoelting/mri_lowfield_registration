@@ -7,6 +7,7 @@ Writes to results/:
     all_subjects.json         full results per subject
     all_subjects.csv          one row per subject (the summary table)
     all_subjects_overlay.png  contact sheet: 64 mT scan with the registered 3T outlines on top
+    transforms/sub-XXXX.tfm   each subject's registration result (used by export_viewer.py)
 
 Each subject uses session 1 and the 64 mT T2 (same settings as register.py). Accuracy is
 checked three ways, none of which needs a known right answer:
@@ -45,6 +46,7 @@ def outline_panels(fixed, moving, tf):
 
 def main():
     OUT.mkdir(exist_ok=True)
+    (OUT / "transforms").mkdir(exist_ok=True)
     subjects = paired_subjects()
     rows, panels = [], []
     for subject in subjects:
@@ -57,6 +59,7 @@ def main():
                                   or (results["starts_differ_mm"] > FLAG_MM and mi_gap < CLOSE_MI))
         rows.append(results)
         panels.append(outline_panels(r["fixed"], r["moving"], r["est_tf"]))
+        sitk.WriteTransform(r["est_tf"], str(OUT / "transforms" / f"{subject}.tfm"))
         print(f"== {subject}: MI {results['mutual_information']['before']} -> "
               f"{results['mutual_information']['after']}, self-consistency "
               f"{sc['mean_error_mm']['after']} mm, starts differ {results['starts_differ_mm']} mm "

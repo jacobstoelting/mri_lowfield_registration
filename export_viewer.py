@@ -1,28 +1,29 @@
 """Export the volumes for the NiiVue web viewer (docs/index.html).
 
-Run from the repo root after `python register.py`:
+Run from the repo root after `python all_subjects.py` (which saves every subject's transform):
     conda activate mri
     python export_viewer.py
     python -m http.server -d docs 8000     # then open http://localhost:8000
 
-Writes to docs/data/ (uint8, 0-255, so they load fast):
+Writes docs/data/subjects.json (the list the page's subject menu shows) and, for every
+subject, a folder docs/data/sub-XXXX/ with (uint8, 0-255, so they load fast):
     t1_3t.nii.gz            3T T1 on its 1 mm grid, cropped to the head: the sharp reference
     t1_3t_edges.nii.gz      outlines of the 3T T1 (3D Canny edges), same grid, 0 or 255
     lowfield_before.nii.gz  64 mT scan, image centers lined up (no rotation)
     lowfield_after.nii.gz   64 mT scan, moved by the registration result
-    results.json            copy of results/results.json (shown on the page)
+    results.json            that subject's row of results/all_subjects.json
 
 The two 64 mT files contain the *same voxels* as the scanner recorded them. Only the header
 (where the volume sits and which way it points) differs, so nothing is interpolated or
 smoothed on our side and the real 1.6 x 1.6 x 5 mm voxels stay visible.
 """
-import shutil
+import json
 from pathlib import Path
 
 import numpy as np
 import SimpleITK as sitk
 
-from register import OUT, initial_transform, load_3t_t1, load_lowfield, normalize
+from register import OUT, SUBJECT, initial_transform, load_3t_t1, load_lowfield, normalize
 
 DOCS_DATA = Path("docs") / "data"
 CROP_MARGIN_MM = 6
@@ -79,17 +80,17 @@ def crop_to_head(img, margin_mm):
     return sitk.RegionOfInterest(img, [h - l for h, l in zip(hi, lo)], lo)
 
 
-def main():
-    tfm = OUT / "t1_to_lowfield.tfm"
-    if not tfm.exists():
-        raise SystemExit(f"Missing {tfm}. Run `python register.py` first.")
-    DOCS_DATA.mkdir(parents=True, exist_ok=True)
+def export_subject(subject, results):
+    """Write one subject's viewer files to docs/data/<subject>/."""
+    tfm = OUT / "transforms" / f"{subject}.tfm"
+    out_dir = DOCS_DATA / subject
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    low = load_lowfield()
-    t1 = load_3t_t1()
+    low = load_lowfield(subject)
+    t1 = load_3t_t1(subject)
     after = as_euler(sitk.ReadTransform(str(tfm)))
-    # "Before" = the same starting guess register.py uses (image centers lined up). It must be
-    # computed on the uncropped T1, because cropping moves the image center.
+    # "Before" = the same starting guess the registration uses (image centers lined up). It
+    # must be computed on the uncropped T1, because cropping moves the image center.
     before = as_euler(initial_transform(normalize(low), normalize(t1), "GEOMETRY"))
 
     t1_crop = crop_to_head(t1, CROP_MARGIN_MM)
@@ -99,18 +100,43 @@ def main():
         "lowfield_before": relocate(low, before),
         "lowfield_after": relocate(low, after),
     }
+    total = 0
     for name, img in outputs.items():
-        out = DOCS_DATA / f"{name}.nii.gz"
+        out = out_dir / f"{name}.nii.gz"
         data = img if name == "t1_3t_edges" else to_uint8(img)
         sitk.WriteImage(data, str(out), useCompression=True)
-        print(f"wrote {out}  {img.GetSize()} @ {tuple(round(s, 2) for s in img.GetSpacing())} mm"
-              f"  ({out.stat().st_size / 1e6:.2f} MB)")
+        total += out.stat().st_size
+    (out_dir / "results.json").write_text(json.dumps(results, indent=2))
+    print(f"wrote {out_dir}/  ({total / 1e6:.1f} MB)")
 
-    shutil.copy(OUT / "results.json", DOCS_DATA / "results.json")
-    print(f"wrote {DOCS_DATA / 'results.json'}")
 
-    # Files from the old simulated-data viewer
-    for old in ("lowfield.nii.gz", "t1_before.nii.gz", "t1_after.nii.gz"):
+def main():
+    table = OUT / "all_subjects.json"
+    if not table.exists():
+        raise SystemExit(f"Missing {table}. Run `python all_subjects.py` first.")
+    rows = json.loads(table.read_text())
+    missing = [r["subject"] for r in rows if not (OUT / "transforms" / f"{r['subject']}.tfm").exists()]
+    if missing:
+        raise SystemExit(f"No saved transform for {missing}. Rerun `python all_subjects.py`.")
+
+    for r in rows:
+        export_subject(r["subject"], r)
+
+    summary = [{
+        "subject": r["subject"],
+        "mi_before": r["mutual_information"]["before"],
+        "mi_after": r["mutual_information"]["after"],
+        "self_consistency_mean_mm": r["self_consistency"]["mean_error_mm"]["after"],
+        "self_consistency_max_mm": r["self_consistency"]["max_error_mm"]["after"],
+    } for r in rows]
+    (DOCS_DATA / "subjects.json").write_text(
+        json.dumps({"default": SUBJECT, "subjects": summary}, indent=2))
+    print(f"wrote {DOCS_DATA / 'subjects.json'}")
+
+    # Single-subject files from the earlier version of the viewer
+    for old in ("t1_3t.nii.gz", "t1_3t_edges.nii.gz", "lowfield_before.nii.gz",
+                "lowfield_after.nii.gz", "results.json",
+                "lowfield.nii.gz", "t1_before.nii.gz", "t1_after.nii.gz"):
         (DOCS_DATA / old).unlink(missing_ok=True)
 
 

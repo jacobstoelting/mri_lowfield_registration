@@ -1,0 +1,82 @@
+{
+  "default": "sub-0035",
+  "subjects": [
+    {
+      "subject": "sub-0011",
+      "mi_before": 0.1484,
+      "mi_after": 0.4005,
+      "self_consistency_mean_mm": 0.57,
+      "self_consistency_max_mm": 1.11
+    },
+    {
+      "subject": "sub-0015",
+      "mi_before": 0.2284,
+      "mi_after": 0.4176,
+      "self_consistency_mean_mm": 0.82,
+      "self_consistency_max_mm": 1.64
+    },
+    {
+      "subject": "sub-0023",
+      "mi_before": 0.3392,
+      "mi_after": 0.422,
+      "self_consistency_mean_mm": 0.67,
+      "self_consistency_max_mm": 1.2
+    },
+    {
+      "subject": "sub-0025",
+      "mi_before": 0.2174,
+      "mi_after": 0.3614,
+      "self_consistency_mean_mm": 0.71,
+      "self_consistency_max_mm": 1.45
+    },
+    {
+      "subject": "sub-0027",
+      "mi_before": 0.3045,
+      "mi_after": 0.42,
+      "self_consistency_mean_mm": 1.3,
+      "self_consistency_max_mm": 2.11
+    },
+    {
+      "subject": "sub-0035",
+      "mi_before": 0.2915,
+      "mi_after": 0.4352,
+      "self_consistency_mean_mm": 0.65,
+      "self_consistency_max_mm": 1.01
+    },
+    {
+      "subject": "sub-0046",
+      "mi_before": 0.3156,
+      "mi_after": 0.4285,
+      "self_consistency_mean_mm": 0.14,
+      "self_consistency_max_mm": 0.27
+    },
+    {
+      "subject": "sub-0047",
+      "mi_before": 0.2652,
+      "mi_after": 0.4443,
+      "self_consistency_mean_mm": 0.61,
+      "self_consistency_max_mm": 1.06
+    },
+    {
+      "subject": "sub-0048",
+      "mi_before": 0.2237,
+      "mi_after": 0.4021,
+      "self_consistency_mean_mm": 0.15,
+      "self_consistency_max_mm": 0.2
+    },
+    {
+      "subject": "sub-0064",
+      "mi_before": 0.198,
+      "mi_after": 0.3897,
+      "self_consistency_mean_mm": 0.84,
+      "self_consistency_max_mm": 1.64
+    },
+    {
+      "subject": "sub-0066",
+      "mi_before": 0.176,
+      "mi_after": 0.3844,
+      "self_consistency_mean_mm": 0.29,
+      "self_consistency_max_mm": 0.61
+    }
+  ]
+}

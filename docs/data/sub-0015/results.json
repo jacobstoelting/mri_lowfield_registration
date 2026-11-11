@@ -1,24 +1,24 @@
 {
-  "subject": "sub-0035",
+  "subject": "sub-0015",
   "session": "ses-01",
   "fixed": "64 mT T2w (Hyperfine Swoop)",
   "moving": "3T T1 (Philips Achieva), 1 mm",
-  "scanner_frame_offset_mm": 224.6,
+  "scanner_frame_offset_mm": 189.6,
   "mutual_information": {
-    "raw_scanner_coordinates": 0.0,
-    "before": 0.2915,
-    "after": 0.4352
+    "raw_scanner_coordinates": 0.1321,
+    "before": 0.2284,
+    "after": 0.4176
   },
-  "start_used": "MOMENTS",
+  "start_used": "GEOMETRY",
   "start_mi": {
-    "GEOMETRY": 0.4352,
-    "MOMENTS": 0.4352
+    "GEOMETRY": 0.4176,
+    "MOMENTS": 0.4176
   },
   "starts_differ_mm": 0.0,
   "estimated_rotation_deg": [
-    7.63,
-    1.75,
-    -3.06
+    -0.04,
+    4.53,
+    -5.19
   ],
   "self_consistency": {
     "known_rotation_deg": [
@@ -32,13 +32,15 @@
       5.0
     ],
     "mean_error_mm": {
-      "before": 18.41,
-      "after": 0.65
+      "before": 17.46,
+      "after": 0.82
     },
     "max_error_mm": {
-      "before": 27.78,
-      "after": 1.01
+      "before": 26.23,
+      "after": 1.64
     }
   },
-  "iterations": 1209
+  "iterations": 1619,
+  "seconds": 33.5,
+  "flagged": false
 }

@@ -8,18 +8,18 @@
     "mutual_information": {
       "raw_scanner_coordinates": 0.0,
       "before": 0.1484,
-      "after": 0.4007
+      "after": 0.4005
     },
     "start_used": "MOMENTS",
     "start_mi": {
-      "GEOMETRY": 0.315,
-      "MOMENTS": 0.4007
+      "GEOMETRY": 0.3204,
+      "MOMENTS": 0.4005
     },
-    "starts_differ_mm": 23.87,
+    "starts_differ_mm": 23.71,
     "estimated_rotation_deg": [
-      8.33,
-      -0.81,
-      6.65
+      8.1,
+      -0.93,
+      6.73
     ],
     "self_consistency": {
       "known_rotation_deg": [
@@ -34,15 +34,15 @@
       ],
       "mean_error_mm": {
         "before": 17.87,
-        "after": 0.59
+        "after": 0.57
       },
       "max_error_mm": {
-        "before": 26.21,
-        "after": 1.12
+        "before": 26.2,
+        "after": 1.11
       }
     },
     "iterations": 6000,
-    "seconds": 120.9,
+    "seconds": 123.0,
     "flagged": false
   },
   {
@@ -87,8 +87,8 @@
         "after": 1.64
       }
     },
-    "iterations": 1605,
-    "seconds": 30.3,
+    "iterations": 1619,
+    "seconds": 33.5,
     "flagged": false
   },
   {
@@ -133,8 +133,8 @@
         "after": 1.2
       }
     },
-    "iterations": 3434,
-    "seconds": 30.5,
+    "iterations": 3435,
+    "seconds": 32.4,
     "flagged": false
   },
   {
@@ -179,8 +179,8 @@
         "after": 1.45
       }
     },
-    "iterations": 4371,
-    "seconds": 52.6,
+    "iterations": 4432,
+    "seconds": 56.8,
     "flagged": false
   },
   {
@@ -226,7 +226,7 @@
       }
     },
     "iterations": 5429,
-    "seconds": 148.2,
+    "seconds": 143.9,
     "flagged": false
   },
   {
@@ -245,10 +245,10 @@
       "GEOMETRY": 0.4352,
       "MOMENTS": 0.4352
     },
-    "starts_differ_mm": 0.0,
+    "starts_differ_mm": 0.01,
     "estimated_rotation_deg": [
       7.63,
-      1.75,
+      1.74,
       -3.05
     ],
     "self_consistency": {
@@ -271,8 +271,8 @@
         "after": 1.01
       }
     },
-    "iterations": 1198,
-    "seconds": 24.2,
+    "iterations": 1201,
+    "seconds": 22.3,
     "flagged": false
   },
   {
@@ -289,9 +289,9 @@
     "start_used": "GEOMETRY",
     "start_mi": {
       "GEOMETRY": 0.4285,
-      "MOMENTS": 0.4073
+      "MOMENTS": 0.4107
     },
-    "starts_differ_mm": 3.24,
+    "starts_differ_mm": 2.76,
     "estimated_rotation_deg": [
       9.61,
       -3.24,
@@ -317,8 +317,8 @@
         "after": 0.27
       }
     },
-    "iterations": 2254,
-    "seconds": 53.5,
+    "iterations": 3065,
+    "seconds": 49.2,
     "flagged": false
   },
   {
@@ -363,8 +363,8 @@
         "after": 1.06
       }
     },
-    "iterations": 3748,
-    "seconds": 41.8,
+    "iterations": 3769,
+    "seconds": 37.7,
     "flagged": false
   },
   {
@@ -409,8 +409,8 @@
         "after": 0.2
       }
     },
-    "iterations": 2185,
-    "seconds": 20.3,
+    "iterations": 2181,
+    "seconds": 14.2,
     "flagged": false
   },
   {
@@ -455,8 +455,8 @@
         "after": 1.64
       }
     },
-    "iterations": 651,
-    "seconds": 86.7,
+    "iterations": 638,
+    "seconds": 75.0,
     "flagged": false
   },
   {
@@ -472,10 +472,10 @@
     },
     "start_used": "MOMENTS",
     "start_mi": {
-      "GEOMETRY": 0.2748,
+      "GEOMETRY": 0.2725,
       "MOMENTS": 0.3844
     },
-    "starts_differ_mm": 21.16,
+    "starts_differ_mm": 22.16,
     "estimated_rotation_deg": [
       4.56,
       -3.26,
@@ -501,8 +501,8 @@
         "after": 0.61
       }
     },
-    "iterations": 2961,
-    "seconds": 84.3,
+    "iterations": 2957,
+    "seconds": 70.4,
     "flagged": false
   }
 ]

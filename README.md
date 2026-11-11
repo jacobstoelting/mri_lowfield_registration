@@ -37,7 +37,7 @@ image: 3T T1.
 
 | Subject | Mutual information before → after | Self-consistency error, mean | Self-consistency error, worst |
 |---|---|---|---|
-| sub-0011 | 0.148 → 0.401 | 0.59 mm | 1.12 mm |
+| sub-0011 | 0.148 → 0.401 | 0.57 mm | 1.11 mm |
 | sub-0015 | 0.228 → 0.418 | 0.82 mm | 1.64 mm |
 | sub-0023 | 0.339 → 0.422 | 0.67 mm | 1.20 mm |
 | sub-0025 | 0.217 → 0.361 | 0.71 mm | 1.45 mm |
@@ -51,7 +51,9 @@ image: 3T T1.
 | **Median** | | **0.65 mm** | |
 
 Every subject is under 1.3 mm on average, smaller than one 64 mT voxel (1.6 x 1.6 x 5 mm).
-`sub-0035` is the one shown in the figure above and in the viewer.
+`sub-0035` is the one shown in the figure above; the viewer can show any of the 11.
+Results vary by a few hundredths of a millimeter between runs for `sub-0011`, whose runs
+use the full iteration budget, so multithreaded rounding differences can nudge where they stop.
 
 - **Before** means the two image centers lined up, with no rotation. In raw scanner
   coordinates the scans don't overlap at all, because the two scanners' coordinate systems
@@ -62,7 +64,7 @@ Every subject is under 1.3 mm on average, smaller than one 64 mT voxel (1.6 x 1.
   is how far apart the two answers put each point of the head.
 - **Two starting guesses** (image centers, and centers of mass) are registered for every
   subject, keeping the one with higher mutual information. For 3 subjects they end in
-  different places, but the loser always scores clearly lower (for example 0.315 vs 0.401
+  different places, but the loser always scores clearly lower (for example 0.320 vs 0.401
   for `sub-0011`), so the choice is clear. Starting from image centers alone would have
   given a wrong answer, about 20 mm off, for `sub-0011` and `sub-0066`.
 
@@ -86,6 +88,9 @@ takes about 2 minutes including the self-consistency check.
 [jacobstoelting.github.io/mri_lowfield_registration](https://jacobstoelting.github.io/mri_lowfield_registration/)
 (built on [NiiVue](https://github.com/niivue/niivue), source in `docs/`)
 
+- **Subject menu.** Any of the 11 volunteers (with their self-consistency error). The
+  choice, and the before/after and view settings, stay in the address bar, so a copied
+  link reopens the same view.
 - **Side by side, linked.** The 64 mT scan on the left and the 3T scan on the right, both in
   grayscale. Clicking, scrolling, zooming or rotating in one view does the same in the
   other, so the crosshair always points at the same anatomy in both. That is what the
@@ -146,7 +151,7 @@ pip install -r requirements.txt
 python download_data.py      # 1.4 GB from Zenodo, unpacked to data/leiden/
 python register.py           # one subject (sub-0035), 20-30 seconds; writes results/
 python all_subjects.py       # all 11 paired subjects, about 9 minutes
-python export_viewer.py      # writes the viewer's scans to docs/data/
+python export_viewer.py      # writes every subject's viewer files to docs/data/ (needs all_subjects.py first)
 python -m http.server -d docs 8000   # optional: preview the viewer at http://localhost:8000
 ```
 
@@ -159,9 +164,9 @@ top of `register.py`.
 |---|---|
 | `download_data.py` | Downloads and unpacks the Zenodo dataset into `data/` |
 | `register.py` | Loads, cleans and registers the scans; self-consistency test; writes `results/` |
-| `all_subjects.py` | Runs `register.py`'s pipeline for all 11 paired subjects; summary table and contact sheet |
+| `all_subjects.py` | Runs `register.py`'s pipeline for all 11 paired subjects; summary table, contact sheet, and each subject's transform (`results/transforms/`) |
 | `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
-| `export_viewer.py` | Writes the scans and 3T outlines the viewer loads to `docs/data/` |
+| `export_viewer.py` | Writes each subject's scans and 3T outlines to `docs/data/sub-XXXX/`, plus the subject list |
 | `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
 | `results/` | Figures, `results.json`, and the transform `t1_to_lowfield.tfm` |
 

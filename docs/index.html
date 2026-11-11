@@ -36,6 +36,11 @@
   <h1>64 mT vs 3T</h1>
 
   <div class="group">
+    <span>Subject</span>
+    <select id="subject" title="The 11 volunteers scanned on both machines (mean self-consistency error)"></select>
+  </div>
+
+  <div class="group">
     <span>64 mT position:</span>
     <button id="btnBefore">Before</button>
     <button id="btnAfter" class="on">After</button>
@@ -66,7 +71,7 @@
 
 <main>
   <section class="pane">
-    <h2>64 mT T2 <small>Hyperfine Swoop · 1.6 × 1.6 × 5 mm voxels</small></h2>
+    <h2>64 mT T2 <small>Hyperfine Swoop · <span id="lowVox">1.6 × 1.6 × 5</span> mm voxels</small></h2>
     <div class="wrap"><canvas id="glLow"></canvas></div>
   </section>
   <section class="pane">
@@ -122,6 +127,17 @@ function applyVisibility() {
   $("btnBefore").classList.toggle("on", !showAfter);
   $("btnAfter").classList.toggle("on", showAfter);
   $("btnEdges").classList.toggle("on", edgesOn);
+  updateUrl();
+}
+
+// Keep the address bar in step with what's on screen, so a copied link reopens the same view.
+function updateUrl() {
+  const q = new URLSearchParams(location.search);
+  if ($("subject").value) q.set("subject", $("subject").value);
+  if (showAfter) q.delete("lf"); else q.set("lf", "before");
+  if (edgesOn) q.delete("outlines"); else q.set("outlines", "0");
+  if ($("view").value === "mpr3d") q.delete("view"); else q.set("view", $("view").value);
+  history.replaceState(null, "", "?" + q.toString());
 }
 
 function setShowAfter(v) { showAfter = v; applyVisibility(); }
@@ -165,50 +181,84 @@ const showLoc = (data) => { $("loc").textContent = data.string ?? ""; };
 nvLow.onLocationChange = showLoc;
 nvT1.onLocationChange = showLoc;
 
+let subjects = [];
+
+function showStats(subject) {
+  const r = subjects.find((x) => x.subject === subject);
+  if (!r) return;
+  $("stats").innerHTML =
+    `${r.subject} · MI <b>${r.mi_before} → ${r.mi_after}</b> · ` +
+    `self-consistency error <b>${r.self_consistency_mean_mm} mm</b> mean, ` +
+    `<b>${r.self_consistency_max_mm} mm</b> max`;
+}
+
+// Load one subject's four files into the two views. Each subject has its own folder.
+async function loadSubject(subject) {
+  $("subject").disabled = true;
+  $("status").textContent = `Loading ${subject}…`;
+  const d = `data/${subject}/`;
+  await Promise.all([
+    nvLow.loadVolumes([
+      { url: d + "t1_3t.nii.gz",           name: "t1_3t.nii.gz",           colormap: "black", cal_min: 20, cal_max: 255 },
+      { url: d + "lowfield_before.nii.gz", name: "lowfield_before.nii.gz", colormap: "white", cal_min: 0,  cal_max: 255 },
+      { url: d + "lowfield_after.nii.gz",  name: "lowfield_after.nii.gz",  colormap: "white", cal_min: 0,  cal_max: 255 },
+      { url: d + "t1_3t_edges.nii.gz",     name: "t1_3t_edges.nii.gz",     colormap: "edge",  cal_min: 0,  cal_max: 255 },
+    ]),
+    nvT1.loadVolumes([
+      { url: d + "t1_3t.nii.gz", name: "t1_3t.nii.gz", colormap: "gray", cal_min: 0, cal_max: 255 },
+    ]),
+  ]);
+  $("subject").value = subject;
+  // Voxel size as stored in this subject's 64 mT file (sub-0064's is interpolated to 0.8 mm)
+  const px = nvLow.volumes[AFTER].hdr.pixDims.slice(1, 4);
+  $("lowVox").textContent = px.map((v) => +v.toFixed(2)).join(" × ");
+  applyVisibility();
+  applyView();
+  showStats(subject);
+  updateUrl();
+  $("subject").disabled = false;
+  $("status").textContent = "Click to move the crosshair · scroll to change slice · drag in 3D to rotate";
+}
+
+$("subject").onchange = () => {
+  loadSubject($("subject").value).catch(loadFailed);
+};
+
+function loadFailed(err) {
+  console.error(err);
+  $("subject").disabled = false;
+  $("status").textContent = "Failed to load volumes. Serve this folder over HTTP " +
+    "(python -m http.server -d docs 8000), don't open the file directly.";
+}
+
 async function main() {
   await nvLow.attachToCanvas($("glLow"));
   await nvT1.attachToCanvas($("glT1"));
-  await Promise.all([
-    nvLow.loadVolumes([
-      { url: "data/t1_3t.nii.gz",           name: "t1_3t.nii.gz",           colormap: "black", cal_min: 20, cal_max: 255 },
-      { url: "data/lowfield_before.nii.gz", name: "lowfield_before.nii.gz", colormap: "white", cal_min: 0,  cal_max: 255 },
-      { url: "data/lowfield_after.nii.gz",  name: "lowfield_after.nii.gz",  colormap: "white", cal_min: 0,  cal_max: 255 },
-      { url: "data/t1_3t_edges.nii.gz",     name: "t1_3t_edges.nii.gz",     colormap: "edge",  cal_min: 0,  cal_max: 255 },
-    ]),
-    nvT1.loadVolumes([
-      { url: "data/t1_3t.nii.gz", name: "t1_3t.nii.gz", colormap: "gray", cal_min: 0, cal_max: 255 },
-    ]),
-  ]);
 
   // Link the two views both ways: crosshair, slice, zoom/pan and 3D rotation follow each other.
   const sync = { "2d": true, "3d": true, crosshair: true, zoomPan: true, sliceType: true };
   nvLow.broadcastTo(nvT1, sync);
   nvT1.broadcastTo(nvLow, sync);
 
-  // Optional URL settings, e.g. index.html?lf=before&view=2&outlines=0
+  const list = await (await fetch("data/subjects.json")).json();
+  subjects = list.subjects;
+  for (const r of subjects) {
+    const o = document.createElement("option");
+    o.value = r.subject;
+    o.textContent = `${r.subject} · ${r.self_consistency_mean_mm} mm`;
+    $("subject").append(o);
+  }
+
+  // Optional URL settings, e.g. index.html?subject=sub-0046&lf=before&view=2&outlines=0
   const q = new URLSearchParams(location.search);
   if (q.has("view")) $("view").value = q.get("view");
   showAfter = q.get("lf") !== "before";
   edgesOn = q.get("outlines") !== "0";
-  applyVisibility();
-  applyView();
-  $("status").textContent = "Click to move the crosshair · scroll to change slice · drag in 3D to rotate";
-
-  try {
-    const r = await (await fetch("data/results.json")).json();
-    const sc = r.self_consistency;
-    $("stats").innerHTML =
-      `${r.subject} · MI <b>${r.mutual_information.before} → ${r.mutual_information.after}</b> · ` +
-      `self-consistency error <b>${sc.mean_error_mm.after} mm</b> mean, ` +
-      `<b>${sc.max_error_mm.after} mm</b> max`;
-  } catch { /* stats are optional */ }
+  const wanted = q.get("subject");
+  await loadSubject(subjects.some((r) => r.subject === wanted) ? wanted : list.default);
 }
 
-main().catch((err) => {
-  console.error(err);
-  $("status").textContent = "Failed to load volumes. Serve this folder over HTTP " +
-    "(python -m http.server -d docs 8000), don't open the file directly.";
-});
+main().catch(loadFailed);
 </script>
 </body>
 </html>
