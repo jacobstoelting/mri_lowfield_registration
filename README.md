@@ -177,8 +177,8 @@ known movement. It's unused in the main pipeline and is there for a planned robu
 
 - **11 subjects, one contrast.** All paired volunteers are covered, but only with the 64 mT
   T2 from their first session. The 64 mT T1 and FLAIR, and repeat sessions, are untested.
-- **Rigid only.** It doesn't model low-field geometric distortion or brain changes between
-  the two visits, which were on different days.
+- **Rigid only.** It doesn't model low-field geometric distortion. Also not sure if significant
+  brain changes would alter results.
 - **Self-consistency is not ground truth.** It shows the method lands in the same place
   again, not that the place is anatomically exact, and it is optimistic because the moved
   copy is the same 3T image. Manually placed landmarks would be a stronger check.
