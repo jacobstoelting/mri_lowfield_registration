@@ -25,6 +25,22 @@
   footer b { color: var(--text); font-weight: 600; }
   #loc { font-family: var(--mono); font-size: 11.5px; }
   #stats { margin-left: auto; }
+  /* Slice bar: shown only in the single-plane views */
+  .slicebar { display: flex; align-items: center; gap: 14px; margin: 0 8px; padding: 8px 14px;
+              border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  .slicebar[hidden] { display: none; }
+  .slicebar .label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+                     color: var(--faint); min-width: 64px; }
+  .slicebar .num { font: 12px var(--mono); color: var(--text); min-width: 78px; text-align: right; }
+  .slicebar .hint { font-size: 12px; color: var(--faint); white-space: nowrap; }
+  input[type="range"] { flex: 1; appearance: none; -webkit-appearance: none; height: 4px; margin: 0;
+                        border-radius: 2px; cursor: pointer;
+                        background: linear-gradient(to right, var(--accent) var(--pos, 50%), var(--line-strong) var(--pos, 50%)); }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+                        background: var(--accent); border: 0; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12); }
+  input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--accent);
+                        border: 0; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12); }
+  @media (max-width: 700px) { .slicebar .hint { display: none; } }
   /* The outline toggle is a state, not an action: a quieter "on" than the white primary button */
   #btnEdges.on { background: var(--surface-2); color: var(--text); border-color: rgba(255, 255, 255, 0.45); }
   @media (max-width: 900px) { main { flex-direction: column; } }
@@ -94,6 +110,14 @@
     <div class="wrap"><canvas id="glT1"></canvas></div>
   </section>
 </main>
+
+<div class="slicebar" id="slicebar" hidden>
+  <span class="label" id="sliceAxis">Axial</span>
+  <input type="range" id="slice" min="0" max="100" step="1" value="50"
+         aria-label="Slice" title="Drag, or focus and use the arrow keys">
+  <span class="num" id="sliceNum">– / –</span>
+  <span class="hint">or scroll on the image</span>
+</div>
 
 <footer>
   <span id="status">Loading…</span>
@@ -181,6 +205,7 @@ function applyView() {
     }
   }
   applyVisibility();
+  updateSliceBar();
 }
 
 $("btnBefore").onclick = () => { stopFlicker(); setShowAfter(false); };
@@ -197,7 +222,42 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "o" || e.key === "O") $("btnEdges").click();
 });
 
-const showLoc = (data) => { $("loc").textContent = data.string ?? ""; };
+// Slice bar for the single-plane views. Both views share the same base grid (the 1 mm 3T
+// scan), so one fractional crosshair position means the same slice in both. NiiVue keeps
+// volumes in RAS order: x = left-right (sagittal), y = back-front (coronal), z = foot-head (axial).
+const SLICE_AXIS = { "0": [2, "Axial"], "1": [1, "Coronal"], "2": [0, "Sagittal"] };
+
+function sliceInfo() {
+  const a = SLICE_AXIS[$("view").value];
+  const n = nvLow.volumes[0]?.dimsRAS?.[a?.[0] + 1];
+  return a && n ? { axis: a[0], name: a[1], n } : null;
+}
+
+function updateSliceBar() {
+  const s = sliceInfo();
+  $("slicebar").hidden = !s;
+  if (!s) return;
+  const i = Math.min(s.n - 1, Math.max(0, Math.round(nvLow.scene.crosshairPos[s.axis] * s.n - 0.5)));
+  $("sliceAxis").textContent = s.name;
+  $("slice").max = s.n - 1;
+  $("slice").value = i;
+  $("slice").style.setProperty("--pos", `${(100 * i) / Math.max(1, s.n - 1)}%`);
+  $("sliceNum").textContent = `${i + 1} / ${s.n}`;
+}
+
+$("slice").oninput = () => {
+  const s = sliceInfo();
+  if (!s) return;
+  const frac = (Number($("slice").value) + 0.5) / s.n;   // middle of the chosen slice
+  for (const nv of [nvLow, nvT1]) {
+    nv.scene.crosshairPos[s.axis] = frac;
+    nv.drawScene();
+  }
+  nvLow.createOnLocationChange?.();   // refresh the coordinate readout
+  updateSliceBar();
+};
+
+const showLoc = (data) => { $("loc").textContent = data.string ?? ""; updateSliceBar(); };
 nvLow.onLocationChange = showLoc;
 nvT1.onLocationChange = showLoc;
 
