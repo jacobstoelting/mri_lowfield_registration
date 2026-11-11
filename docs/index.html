@@ -29,6 +29,8 @@
            flex-wrap: wrap; gap: 18px; font-variant-numeric: tabular-nums; }
   footer b { color: var(--text); font-weight: 600; }
   .edge { color: var(--edge); }
+  a.button { color: var(--text); background: #2a2a2a; border: 1px solid #444; border-radius: 4px;
+             padding: 4px 10px; text-decoration: none; margin-left: auto; }
 </style>
 </head>
 <body>
@@ -38,6 +40,11 @@
   <div class="group">
     <span>Subject</span>
     <select id="subject" title="The 11 volunteers scanned on both machines (mean self-consistency error)"></select>
+  </div>
+
+  <div class="group">
+    <span>64 mT scan</span>
+    <select id="contrast" title="Which 64 mT scan is shown. Each was registered to the same 3T T1 on its own."></select>
   </div>
 
   <div class="group">
@@ -54,8 +61,8 @@
   <div class="group">
     <span>View</span>
     <select id="view">
-      <option value="mpr3d">3 planes + 3D</option>
       <option value="mpr">3 planes</option>
+      <option value="mpr3d">3 planes + 3D</option>
       <option value="0">Axial</option>
       <option value="1">Coronal</option>
       <option value="2">Sagittal</option>
@@ -67,11 +74,13 @@
     <span>The views are linked: click, scroll or rotate in either one.
       <span class="edge">Yellow lines</span> = edges of the 3T scan.</span>
   </div>
+
+  <a class="button" href="info.html" title="All results tables and extra checks">More info</a>
 </header>
 
 <main>
   <section class="pane">
-    <h2>64 mT T2 <small>Hyperfine Swoop · <span id="lowVox">1.6 × 1.6 × 5</span> mm voxels</small></h2>
+    <h2>64 mT <span id="lowName">T2</span> <small>Hyperfine Swoop · <span id="lowVox">1.6 × 1.6 × 5</span> mm voxels</small></h2>
     <div class="wrap"><canvas id="glLow"></canvas></div>
   </section>
   <section class="pane">
@@ -119,10 +128,11 @@ for (const nv of [nvLow, nvT1]) {
 
 let showAfter = true, edgesOn = true, flickerTimer = null;
 
-// Outlines are on by default, except in "3 planes + 3D": a NiiVue view holds all its layers in
-// one 3D texture, so they can't be hidden in the 3D tile alone and would cover the 64 mT render
-// in a yellow skin. The button / O key still turns them on there.
-const edgesDefault = () => $("view").value !== "mpr3d";
+// Outlines are on by default. The default view is "3 planes": in "3 planes + 3D" they also
+// cover the 64 mT render in a yellow skin, because a NiiVue view holds all its layers in one 3D
+// texture and can't hide them in the 3D tile alone. The button / O key turns them off there.
+const DEFAULT_VIEW = "mpr";
+const CONTRAST_NAMES = { T2w: "T2", FLAIR: "FLAIR", T1w: "T1" };
 
 function applyVisibility() {
   nvLow.setOpacity(BEFORE, showAfter ? 0 : 1);
@@ -139,9 +149,10 @@ function applyVisibility() {
 function updateUrl() {
   const q = new URLSearchParams(location.search);
   if ($("subject").value) q.set("subject", $("subject").value);
+  if ($("contrast").value === defaultContrast) q.delete("contrast"); else q.set("contrast", $("contrast").value);
   if (showAfter) q.delete("lf"); else q.set("lf", "before");
-  if (edgesOn === edgesDefault()) q.delete("outlines"); else q.set("outlines", edgesOn ? "1" : "0");
-  if ($("view").value === "mpr3d") q.delete("view"); else q.set("view", $("view").value);
+  q.delete("outlines");   // not kept in the link: outlines always start on
+  if ($("view").value === DEFAULT_VIEW) q.delete("view"); else q.set("view", $("view").value);
   history.replaceState(null, "", "?" + q.toString());
 }
 
@@ -174,7 +185,7 @@ $("btnFlicker").onclick = () => {
   flickerTimer = setInterval(() => setShowAfter(!showAfter), 600);
 };
 $("btnEdges").onclick = () => { edgesOn = !edgesOn; applyVisibility(); };
-$("view").onchange = () => { edgesOn = edgesDefault(); applyView(); };
+$("view").onchange = () => applyView();
 document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "SELECT") return;
   if (e.key === "o" || e.key === "O") $("btnEdges").click();
@@ -184,52 +195,75 @@ const showLoc = (data) => { $("loc").textContent = data.string ?? ""; };
 nvLow.onLocationChange = showLoc;
 nvT1.onLocationChange = showLoc;
 
-let subjects = [];
+let subjects = [], defaultContrast = "T2w";
 
-function showStats(subject) {
-  const r = subjects.find((x) => x.subject === subject);
+const statsFor = (subject, contrast) =>
+  subjects.find((x) => x.subject === subject)?.contrasts[contrast];
+
+function showStats(subject, contrast) {
+  const r = statsFor(subject, contrast);
   if (!r) return;
   $("stats").innerHTML =
-    `${r.subject} · MI <b>${r.mi_before} → ${r.mi_after}</b> · ` +
+    `${subject} · 64 mT ${CONTRAST_NAMES[contrast]} · MI <b>${r.mi_before} → ${r.mi_after}</b> · ` +
     `self-consistency error <b>${r.self_consistency_mean_mm} mm</b> mean, ` +
     `<b>${r.self_consistency_max_mm} mm</b> max`;
 }
 
-// Load one subject's four files into the two views. Each subject has its own folder.
-async function loadSubject(subject) {
-  $("subject").disabled = true;
-  $("status").textContent = `Loading ${subject}…`;
-  const d = `data/${subject}/`;
+// Menu labels follow the other menu: subjects show their error for the chosen contrast, and
+// contrasts a subject doesn't have are greyed out.
+function refreshMenus() {
+  const subject = $("subject").value, contrast = $("contrast").value;
+  for (const o of $("subject").options) {
+    const r = statsFor(o.value, contrast);
+    o.textContent = r ? `${o.value} · ${r.self_consistency_mean_mm} mm` : `${o.value} · no ${CONTRAST_NAMES[contrast]}`;
+    o.disabled = !r;
+  }
+  for (const o of $("contrast").options) {
+    const r = statsFor(subject, o.value);
+    o.textContent = CONTRAST_NAMES[o.value] + (r ? "" : " (not scanned)");
+    o.disabled = !r;
+  }
+}
+
+const setMenusDisabled = (v) => { $("subject").disabled = v; $("contrast").disabled = v; };
+
+// Load one subject's files for one 64 mT contrast into the two views. Each subject has its own folder.
+async function loadSubject(subject, contrast) {
+  setMenusDisabled(true);
+  $("status").textContent = `Loading ${subject}, 64 mT ${CONTRAST_NAMES[contrast]}…`;
+  const d = `data/${subject}/`, lf = `lowfield_${contrast}`;
   await Promise.all([
     nvLow.loadVolumes([
-      { url: d + "t1_3t.nii.gz",           name: "t1_3t.nii.gz",           colormap: "black", cal_min: 20, cal_max: 255 },
-      { url: d + "lowfield_before.nii.gz", name: "lowfield_before.nii.gz", colormap: "white", cal_min: 0,  cal_max: 255 },
-      { url: d + "lowfield_after.nii.gz",  name: "lowfield_after.nii.gz",  colormap: "white", cal_min: 0,  cal_max: 255 },
-      { url: d + "t1_3t_edges.nii.gz",     name: "t1_3t_edges.nii.gz",     colormap: "edge",  cal_min: 0,  cal_max: 255 },
+      { url: d + "t1_3t.nii.gz",        name: "t1_3t.nii.gz",        colormap: "black", cal_min: 20, cal_max: 255 },
+      { url: d + `${lf}_before.nii.gz`, name: `${lf}_before.nii.gz`, colormap: "white", cal_min: 0,  cal_max: 255 },
+      { url: d + `${lf}_after.nii.gz`,  name: `${lf}_after.nii.gz`,  colormap: "white", cal_min: 0,  cal_max: 255 },
+      { url: d + "t1_3t_edges.nii.gz",  name: "t1_3t_edges.nii.gz",  colormap: "edge",  cal_min: 0,  cal_max: 255 },
     ]),
     nvT1.loadVolumes([
       { url: d + "t1_3t.nii.gz", name: "t1_3t.nii.gz", colormap: "gray", cal_min: 0, cal_max: 255 },
     ]),
   ]);
   $("subject").value = subject;
+  $("contrast").value = contrast;
+  $("lowName").textContent = CONTRAST_NAMES[contrast];
+  refreshMenus();
   // Voxel size as stored in this subject's 64 mT file (sub-0064's is interpolated to 0.8 mm)
   const px = nvLow.volumes[AFTER].hdr.pixDims.slice(1, 4);
   $("lowVox").textContent = px.map((v) => +v.toFixed(2)).join(" × ");
   applyVisibility();
   applyView();
-  showStats(subject);
+  showStats(subject, contrast);
   updateUrl();
-  $("subject").disabled = false;
+  setMenusDisabled(false);
   $("status").textContent = "Click to move the crosshair · scroll to change slice · drag in 3D to rotate";
 }
 
-$("subject").onchange = () => {
-  loadSubject($("subject").value).catch(loadFailed);
-};
+$("subject").onchange = () => loadSubject($("subject").value, $("contrast").value).catch(loadFailed);
+$("contrast").onchange = () => loadSubject($("subject").value, $("contrast").value).catch(loadFailed);
 
 function loadFailed(err) {
   console.error(err);
-  $("subject").disabled = false;
+  setMenusDisabled(false);
   $("status").textContent = "Failed to load volumes. Serve this folder over HTTP " +
     "(python -m http.server -d docs 8000), don't open the file directly.";
 }
@@ -245,20 +279,20 @@ async function main() {
 
   const list = await (await fetch("data/subjects.json")).json();
   subjects = list.subjects;
-  for (const r of subjects) {
-    const o = document.createElement("option");
-    o.value = r.subject;
-    o.textContent = `${r.subject} · ${r.self_consistency_mean_mm} mm`;
-    $("subject").append(o);
-  }
+  defaultContrast = list.default_contrast;
+  for (const r of subjects) $("subject").append(new Option(r.subject, r.subject));
+  for (const c of list.contrasts) $("contrast").append(new Option(CONTRAST_NAMES[c], c));
 
-  // Optional URL settings, e.g. index.html?subject=sub-0046&lf=before&view=2&outlines=0
+  // Optional URL settings, e.g. index.html?subject=sub-0046&contrast=FLAIR&lf=before&view=2
   const q = new URLSearchParams(location.search);
-  if (q.has("view")) $("view").value = q.get("view");
+  $("view").value = q.get("view") ?? DEFAULT_VIEW;
+  if (!$("view").value) $("view").value = DEFAULT_VIEW;   // unknown value in the link
   showAfter = q.get("lf") !== "before";
-  edgesOn = q.has("outlines") ? q.get("outlines") !== "0" : edgesDefault();
-  const wanted = q.get("subject");
-  await loadSubject(subjects.some((r) => r.subject === wanted) ? wanted : list.default);
+  let subject = q.get("subject"), contrast = q.get("contrast");
+  if (!subjects.some((r) => r.subject === subject)) subject = list.default;
+  if (!statsFor(subject, contrast)) contrast = statsFor(subject, defaultContrast) ? defaultContrast
+    : Object.keys(subjects.find((r) => r.subject === subject).contrasts)[0];
+  await loadSubject(subject, contrast);
 }
 
 main().catch(loadFailed);

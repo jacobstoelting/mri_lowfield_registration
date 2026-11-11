@@ -5,15 +5,15 @@ Run from the repo root after `python all_subjects.py` (which saves every subject
     python export_viewer.py
     python -m http.server -d docs 8000     # then open http://localhost:8000
 
-Writes docs/data/subjects.json (the list the page's subject menu shows) and, for every
-subject, a folder docs/data/sub-XXXX/ with (uint8, 0-255, so they load fast):
-    t1_3t.nii.gz            3T T1 on its 1 mm grid, cropped to the head: the sharp reference
-    t1_3t_edges.nii.gz      outlines of the 3T T1 (3D Canny edges), same grid, 0 or 255
-    lowfield_before.nii.gz  64 mT scan, image centers lined up (no rotation)
-    lowfield_after.nii.gz   64 mT scan, moved by the registration result
-    results.json            that subject's row of results/all_subjects.json
+Writes docs/data/subjects.json (the lists the page's subject and contrast menus show) and,
+for every subject, a folder docs/data/sub-XXXX/ with (uint8, 0-255, so they load fast):
+    t1_3t.nii.gz                       3T T1 on its 1 mm grid, cropped to the head: the sharp reference
+    t1_3t_edges.nii.gz                 outlines of the 3T T1 (3D Canny edges), same grid, 0 or 255
+    lowfield_<contrast>_before.nii.gz  64 mT scan, image centers lined up (no rotation)
+    lowfield_<contrast>_after.nii.gz   64 mT scan, moved by the registration result
+    results.json                       that subject's rows of results/all_subjects.json
 
-The two 64 mT files contain the *same voxels* as the scanner recorded them. Only the header
+<contrast> is T2w, FLAIR or T1w. Each pair of 64 mT files contains the *same voxels* as the scanner recorded them. Only the header
 (where the volume sits and which way it points) differs, so nothing is interpolated or
 smoothed on our side and the real 1.6 x 1.6 x 5 mm voxels stay visible.
 """
@@ -23,6 +23,7 @@ from pathlib import Path
 import numpy as np
 import SimpleITK as sitk
 
+from all_subjects import CONTRASTS
 from register import OUT, SUBJECT, initial_transform, load_3t_t1, load_lowfield, normalize
 
 DOCS_DATA = Path("docs") / "data"
@@ -80,26 +81,26 @@ def crop_to_head(img, margin_mm):
     return sitk.RegionOfInterest(img, [h - l for h, l in zip(hi, lo)], lo)
 
 
+def transform_path(subject, contrast):
+    return OUT / "transforms" / f"{subject}_{contrast}.tfm"
+
+
 def export_subject(subject, results):
     """Write one subject's viewer files to docs/data/<subject>/."""
-    tfm = OUT / "transforms" / f"{subject}.tfm"
     out_dir = DOCS_DATA / subject
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    low = load_lowfield(subject)
     t1 = load_3t_t1(subject)
-    after = as_euler(sitk.ReadTransform(str(tfm)))
-    # "Before" = the same starting guess the registration uses (image centers lined up). It
-    # must be computed on the uncropped T1, because cropping moves the image center.
-    before = as_euler(initial_transform(normalize(low), normalize(t1), "GEOMETRY"))
-
     t1_crop = crop_to_head(t1, CROP_MARGIN_MM)
-    outputs = {
-        "t1_3t": t1_crop,
-        "t1_3t_edges": outlines(t1_crop),
-        "lowfield_before": relocate(low, before),
-        "lowfield_after": relocate(low, after),
-    }
+    outputs = {"t1_3t": t1_crop, "t1_3t_edges": outlines(t1_crop)}
+    for contrast in CONTRASTS:
+        low = load_lowfield(subject, contrast=contrast)
+        after = as_euler(sitk.ReadTransform(str(transform_path(subject, contrast))))
+        # "Before" = the same starting guess the registration uses (image centers lined up).
+        # It must be computed on the uncropped T1, because cropping moves the image center.
+        before = as_euler(initial_transform(normalize(low), normalize(t1), "GEOMETRY"))
+        outputs[f"lowfield_{contrast}_before"] = relocate(low, before)
+        outputs[f"lowfield_{contrast}_after"] = relocate(low, after)
     total = 0
     for name, img in outputs.items():
         out = out_dir / f"{name}.nii.gz"
@@ -115,29 +116,34 @@ def main():
     if not table.exists():
         raise SystemExit(f"Missing {table}. Run `python all_subjects.py` first.")
     rows = json.loads(table.read_text())
-    missing = [r["subject"] for r in rows if not (OUT / "transforms" / f"{r['subject']}.tfm").exists()]
+    subjects = sorted({r["subject"] for r in rows})
+    missing = [f"{s} {c}" for s in subjects for c in CONTRASTS if not transform_path(s, c).exists()]
     if missing:
         raise SystemExit(f"No saved transform for {missing}. Rerun `python all_subjects.py`.")
 
-    for r in rows:
-        export_subject(r["subject"], r)
-
-    summary = [{
-        "subject": r["subject"],
-        "mi_before": r["mutual_information"]["before"],
-        "mi_after": r["mutual_information"]["after"],
-        "self_consistency_mean_mm": r["self_consistency"]["mean_error_mm"]["after"],
-        "self_consistency_max_mm": r["self_consistency"]["max_error_mm"]["after"],
-    } for r in rows]
-    (DOCS_DATA / "subjects.json").write_text(
-        json.dumps({"default": SUBJECT, "subjects": summary}, indent=2))
+    summary = []
+    for subject in subjects:
+        mine = [r for r in rows if r["subject"] == subject]
+        export_subject(subject, mine)
+        summary.append({"subject": subject, "contrasts": {r["contrast"]: {
+            "mi_before": r["mutual_information"]["before"],
+            "mi_after": r["mutual_information"]["after"],
+            "self_consistency_mean_mm": r["self_consistency"]["mean_error_mm"]["after"],
+            "self_consistency_max_mm": r["self_consistency"]["max_error_mm"]["after"],
+        } for r in mine}})
+    (DOCS_DATA / "subjects.json").write_text(json.dumps(
+        {"default": SUBJECT, "default_contrast": "T2w", "contrasts": list(CONTRASTS),
+         "subjects": summary}, indent=2))
     print(f"wrote {DOCS_DATA / 'subjects.json'}")
 
-    # Single-subject files from the earlier version of the viewer
+    # Files from earlier versions of the viewer
     for old in ("t1_3t.nii.gz", "t1_3t_edges.nii.gz", "lowfield_before.nii.gz",
                 "lowfield_after.nii.gz", "results.json",
                 "lowfield.nii.gz", "t1_before.nii.gz", "t1_after.nii.gz"):
         (DOCS_DATA / old).unlink(missing_ok=True)
+    for subject in subjects:
+        for old in ("lowfield_before.nii.gz", "lowfield_after.nii.gz"):
+            (DOCS_DATA / subject / old).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
