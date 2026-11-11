@@ -84,6 +84,19 @@ because it ran out of iterations).
 Full results: `results/all_subjects.csv` and `results/consistency_loop.json`. Contact sheet
 with the 3T outlines on each 64 mT scan: `results/all_subjects_overlay.png`.
 
+### Repeat 64 mT sessions
+
+Five of the volunteers had the 64 mT scan repeated on other days (9 repeat sessions). Their
+heads sat 3-20 mm and 1-10 degrees away from the first session's position in the scanner,
+so scans from different days have to be registered before they can be compared. A second
+consistency loop goes through a different day: 64 mT session 1 → 64 mT session N → 3T T1,
+against session 1 → 3T T1 directly. The loop error has a median of **0.89 mm** (worst
+1.15 mm). One registration, `sub-0027` session 5 to the 3T T1, did not converge: after 20000
+iterations its mutual information was still slowly rising. Faster optimizers converged
+quickly but onto wrong answers 4-10 mm away, so this pair has many shallow false optima; the
+slow climb still ends 0.77 mm from the route through session 1. Full table:
+`results/repeat_sessions.json`.
+
 ### What went wrong first
 
 The first run over all 11 subjects looked worse: 3 subjects had self-consistency errors of
@@ -176,6 +189,7 @@ python register.py           # one subject (sub-0035), 20-30 seconds; writes res
 python smoke_test.py         # optional: checks sub-0035 still registers (MI up, error under 1.5 mm)
 python all_subjects.py       # all 11 paired subjects, about 25 minutes
 python consistency_loop.py   # stricter accuracy check through the 3T T2, about 10 minutes
+python repeat_sessions.py    # repeat 64 mT sessions: head position and a second loop, about 25 minutes
 python export_viewer.py      # writes every subject's viewer files to docs/data/ (needs all_subjects.py first)
 python -m http.server -d docs 8000   # optional: preview the viewer at http://localhost:8000
 ```
@@ -191,6 +205,7 @@ top of `register.py`.
 | `register.py` | Loads, cleans and registers the scans; self-consistency test; writes `results/` |
 | `all_subjects.py` | Runs `register.py`'s pipeline for all 11 paired subjects; summary table, contact sheet, and each subject's transform (`results/transforms/`) |
 | `consistency_loop.py` | Consistency loop: registers each 64 mT T2 to the 3T T2 too, and the 3T T2 to the 3T T1, and checks the two routes agree |
+| `repeat_sessions.py` | Registers each repeat 64 mT session to session 1 and checks the loop through it to the 3T T1 |
 | `smoke_test.py` | Quick check after code changes: registers sub-0035 and fails if the result got worse |
 | `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
 | `export_viewer.py` | Writes each subject's scans and 3T outlines to `docs/data/sub-XXXX/`, plus the subject list |

@@ -45,11 +45,11 @@ def check_subject(subject):
     t2 = load_3t(subject, "T2w")
 
     print(f"{subject}: A  64 mT T2 -> 3T T1")
-    fixed, _, A, mi_a = register_images(low, t1)
+    fixed, _, A, mi_a, conv_a = register_images(low, t1)
     print(f"{subject}: B  64 mT T2 -> 3T T2")
-    _, _, B, mi_b = register_images(low, t2)
+    _, _, B, mi_b, conv_b = register_images(low, t2)
     print(f"{subject}: C  3T T2 -> 3T T1 (same session)")
-    fixed_t2, _, C, mi_c = register_images(t2, t1)
+    fixed_t2, _, C, mi_c, conv_c = register_images(t2, t1)
 
     # CompositeTransform([C, B]) applies B first, then C: 64 mT point -> 3T T2 -> 3T T1.
     via_t2 = sitk.CompositeTransform([C, B])
@@ -65,6 +65,7 @@ def check_subject(subject):
         "mutual_information": {"A_lowfield_to_3t_t1": round(mi_a, 4),
                                "B_lowfield_to_3t_t2": round(mi_b, 4),
                                "C_3t_t2_to_3t_t1": round(mi_c, 4)},
+        "converged": bool(conv_a and conv_b and conv_c),
     }
 
 

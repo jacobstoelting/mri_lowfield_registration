@@ -269,29 +269,35 @@ def register_best(fixed, moving):
 def register_images(fixed_img, moving_img):
     """Normalize two masked scans and register moving -> fixed from both starting guesses.
     Returns (normalized fixed, normalized moving, transform mapping fixed points to moving
-    points, final MI)."""
+    points, final MI, whether it converged)."""
     fixed, moving = normalize(fixed_img), normalize(moving_img)
     mi, _, tf, _, _, _, converged = register_best(fixed, moving)
     if not converged:
         print("  WARNING: did not converge")
-    return fixed, moving, tf, mi
+    return fixed, moving, tf, mi, converged
 
 
 def run_subject(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
     """Register one volunteer's 3T T1 to their 64 mT scan and measure the result.
 
     Returns (results dict, images and transforms needed for figures/outputs)."""
-    low = load_lowfield(subject, session, contrast)
-    t1 = load_3t_t1(subject)
+    results, r = run_pair(load_lowfield(subject, session, contrast), load_3t_t1(subject),
+                          f"64 mT {contrast} (Hyperfine Swoop)")
+    return {"subject": subject, "session": session, **results}, r
+
+
+def run_pair(low, t1, fixed_name):
+    """Register the 3T T1 (moving) to a coarse scan (fixed, e.g. the 64 mT scan) and measure
+    the result: mutual information, the two starting guesses, and self-consistency."""
     fixed, moving = normalize(low), normalize(t1)
-    print(f"{subject}: 64 mT {contrast} {low.GetSize()} @ "
+    print(f"{fixed_name} {low.GetSize()} @ "
           f"{tuple(round(s, 2) for s in low.GetSpacing())} mm (fixed) <- 3T T1 "
           f"{t1.GetSize()} @ {t1.GetSpacing()} mm (moving)")
 
     identity = sitk.Euler3DTransform()
     start = initial_transform(fixed, moving, "GEOMETRY")  # "before": centers lined up
 
-    print("Register 3T T1 -> 64 mT")
+    print(f"Register 3T T1 -> {fixed_name}")
     after_mi, init_used, est_tf, history, starts_differ, start_mi, converged = \
         register_best(fixed, moving)
 
@@ -307,9 +313,7 @@ def run_subject(subject=SUBJECT, session=SESSION, contrast=LOWFIELD_CONTRAST):
 
     euler_est = sitk.Euler3DTransform(sitk.CompositeTransform(est_tf).GetNthTransform(0))
     results = {
-        "subject": subject,
-        "session": session,
-        "fixed": f"64 mT {contrast} (Hyperfine Swoop)",
+        "fixed": fixed_name,
         "moving": "3T T1 (Philips Achieva), 1 mm",
         "scanner_frame_offset_mm": round(float(np.linalg.norm(
             np.subtract(image_center(low), image_center(t1)))), 1),

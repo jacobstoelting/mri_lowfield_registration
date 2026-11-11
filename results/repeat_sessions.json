@@ -1,0 +1,137 @@
+[
+  {
+    "subject": "sub-0015",
+    "session": "ses-02",
+    "head_position_change": {
+      "mean_mm": 9.9,
+      "max_mm": 18.5,
+      "rotation_deg": 7.5
+    },
+    "loop_error_mm": {
+      "mean": 1.08,
+      "max": 1.81
+    },
+    "mi_session1_to_session": 0.7385,
+    "converged": true
+  },
+  {
+    "subject": "sub-0015",
+    "session": "ses-03",
+    "head_position_change": {
+      "mean_mm": 10.1,
+      "max_mm": 19.6,
+      "rotation_deg": 8.0
+    },
+    "loop_error_mm": {
+      "mean": 0.89,
+      "max": 1.68
+    },
+    "mi_session1_to_session": 0.7311,
+    "converged": true
+  },
+  {
+    "subject": "sub-0025",
+    "session": "ses-02",
+    "head_position_change": {
+      "mean_mm": 5.9,
+      "max_mm": 10.8,
+      "rotation_deg": 4.7
+    },
+    "loop_error_mm": {
+      "mean": 0.84,
+      "max": 1.83
+    },
+    "mi_session1_to_session": 0.8026,
+    "converged": true
+  },
+  {
+    "subject": "sub-0027",
+    "session": "ses-02",
+    "head_position_change": {
+      "mean_mm": 8.3,
+      "max_mm": 10.6,
+      "rotation_deg": 5.1
+    },
+    "loop_error_mm": {
+      "mean": 1.11,
+      "max": 2.17
+    },
+    "mi_session1_to_session": 0.8017,
+    "converged": true
+  },
+  {
+    "subject": "sub-0027",
+    "session": "ses-03",
+    "head_position_change": {
+      "mean_mm": 16.8,
+      "max_mm": 27.0,
+      "rotation_deg": 8.9
+    },
+    "loop_error_mm": {
+      "mean": 1.08,
+      "max": 2.03
+    },
+    "mi_session1_to_session": 0.7721,
+    "converged": true
+  },
+  {
+    "subject": "sub-0027",
+    "session": "ses-04",
+    "head_position_change": {
+      "mean_mm": 20.5,
+      "max_mm": 29.0,
+      "rotation_deg": 9.6
+    },
+    "loop_error_mm": {
+      "mean": 0.63,
+      "max": 1.2
+    },
+    "mi_session1_to_session": 0.7853,
+    "converged": true
+  },
+  {
+    "subject": "sub-0027",
+    "session": "ses-05",
+    "head_position_change": {
+      "mean_mm": 11.9,
+      "max_mm": 14.4,
+      "rotation_deg": 3.1
+    },
+    "loop_error_mm": {
+      "mean": 0.77,
+      "max": 1.22
+    },
+    "mi_session1_to_session": 0.7455,
+    "converged": false
+  },
+  {
+    "subject": "sub-0046",
+    "session": "ses-02",
+    "head_position_change": {
+      "mean_mm": 3.1,
+      "max_mm": 3.8,
+      "rotation_deg": 1.1
+    },
+    "loop_error_mm": {
+      "mean": 0.73,
+      "max": 1.0
+    },
+    "mi_session1_to_session": 0.8748,
+    "converged": true
+  },
+  {
+    "subject": "sub-0046",
+    "session": "ses-03",
+    "head_position_change": {
+      "mean_mm": 12.1,
+      "max_mm": 18.8,
+      "rotation_deg": 6.1
+    },
+    "loop_error_mm": {
+      "mean": 1.15,
+      "max": 1.62
+    },
+    "mi_session1_to_session": 0.8114,
+    "converged": true
+  }
+]

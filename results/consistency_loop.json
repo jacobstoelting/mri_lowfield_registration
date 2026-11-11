@@ -14,7 +14,8 @@
       "A_lowfield_to_3t_t1": 0.4012,
       "B_lowfield_to_3t_t2": 0.5415,
       "C_3t_t2_to_3t_t1": 0.5609
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0015",
@@ -31,7 +32,8 @@
       "A_lowfield_to_3t_t1": 0.4176,
       "B_lowfield_to_3t_t2": 0.5564,
       "C_3t_t2_to_3t_t1": 0.5093
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0023",
@@ -48,7 +50,8 @@
       "A_lowfield_to_3t_t1": 0.422,
       "B_lowfield_to_3t_t2": 0.5462,
       "C_3t_t2_to_3t_t1": 0.5668
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0025",
@@ -65,7 +68,8 @@
       "A_lowfield_to_3t_t1": 0.3614,
       "B_lowfield_to_3t_t2": 0.5541,
       "C_3t_t2_to_3t_t1": 0.4647
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0027",
@@ -82,7 +86,8 @@
       "A_lowfield_to_3t_t1": 0.4204,
       "B_lowfield_to_3t_t2": 0.5778,
       "C_3t_t2_to_3t_t1": 0.5249
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0035",
@@ -99,7 +104,8 @@
       "A_lowfield_to_3t_t1": 0.4352,
       "B_lowfield_to_3t_t2": 0.5431,
       "C_3t_t2_to_3t_t1": 0.5988
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0046",
@@ -116,7 +122,8 @@
       "A_lowfield_to_3t_t1": 0.4285,
       "B_lowfield_to_3t_t2": 0.5772,
       "C_3t_t2_to_3t_t1": 0.5447
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0047",
@@ -133,7 +140,8 @@
       "A_lowfield_to_3t_t1": 0.4443,
       "B_lowfield_to_3t_t2": 0.6027,
       "C_3t_t2_to_3t_t1": 0.4962
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0048",
@@ -150,7 +158,8 @@
       "A_lowfield_to_3t_t1": 0.4021,
       "B_lowfield_to_3t_t2": 0.5435,
       "C_3t_t2_to_3t_t1": 0.4952
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0064",
@@ -167,7 +176,8 @@
       "A_lowfield_to_3t_t1": 0.3897,
       "B_lowfield_to_3t_t2": 0.476,
       "C_3t_t2_to_3t_t1": 0.5182
-    }
+    },
+    "converged": true
   },
   {
     "subject": "sub-0066",
@@ -184,6 +194,7 @@
       "A_lowfield_to_3t_t1": 0.3844,
       "B_lowfield_to_3t_t2": 0.5493,
       "C_3t_t2_to_3t_t1": 0.5014
-    }
+    },
+    "converged": true
   }
 ]
