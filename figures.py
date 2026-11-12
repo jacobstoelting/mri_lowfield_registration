@@ -97,9 +97,10 @@ def save_figures(fixed, moving, before_tf, after_tf, history, results, out):
     plt.close(fig)
 
 
-# Colorblind-safe pair (validated: CVD Delta E 24.7), plus ink colors for text and the grid.
-SELF_COLOR, LOOP_COLOR = "#2a78d6", "#eb6834"
-INK, INK_MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
+# Dark, to match the before/after figure. Colorblind-safe pair validated on black
+# (CVD Delta E 26.8, both >= 3:1 contrast), plus ink colors for text and the grid.
+SELF_COLOR, LOOP_COLOR = "#3987e5", "#d95926"
+INK, INK_MUTED, GRID, SURFACE = "#f0efec", "#a8a79f", "#2e2e2c", "#000000"
 VOXEL_IN_PLANE_MM = 1.6
 
 
