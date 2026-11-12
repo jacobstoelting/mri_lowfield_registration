@@ -26,8 +26,11 @@ OUT = Path("results")
 LEIDEN = DATA / "leiden" / "v5 Paired 64mT and 3T Brain MRI Scans of Healthy Subjects for Neuroimaging Research" / "Data"
 
 # Which volunteer and which scans. The 64 mT and 3T folders share subject IDs (same person).
-# This subject drives the figures and the web viewer; all_subjects.py runs every pair.
+# SUBJECT is the viewer's opening subject and the smoke test's; all_subjects.py runs every pair.
 SUBJECT = "sub-0035"
+# The README figure's subject (main() below): the largest correction among the accurate
+# subjects (18 degrees, 20 mm mean shift; loop error 0.86 mm), so before/after is easy to see.
+FIGURE_SUBJECT = "sub-0047"
 SESSION = "ses-01"
 LOWFIELD_CONTRAST = "T2w"  # 64 mT scan used as the fixed image: "T2w", "FLAIR" or "T1w"
 
@@ -342,7 +345,7 @@ def run_pair(low, t1, fixed_name):
 
 def main():
     OUT.mkdir(exist_ok=True)
-    results, r = run_subject()
+    results, r = run_subject(FIGURE_SUBJECT)
     low, t1, est_tf, history = r["low"], r["t1"], r["est_tf"], r["history"]
 
     sitk.WriteImage(low, str(OUT / "lowfield.nii.gz"))

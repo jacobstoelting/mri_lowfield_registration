@@ -19,7 +19,7 @@ The loop error still isn't ground truth: both paths start from the same 64 mT sc
 distortion in that scan would bend both the same way and stay hidden. It does catch errors
 that depend on which 3T image the scan is registered to.
 
-Writes results/consistency_loop.json.
+Writes results/consistency_loop.json and results/accuracy_summary.png.
 """
 import json
 import math
@@ -27,6 +27,7 @@ import math
 import numpy as np
 import SimpleITK as sitk
 
+from figures import save_accuracy_summary
 from register import (OUT, load_3t, load_lowfield, paired_subjects, register_images,
                       registration_error_mm)
 
@@ -82,6 +83,7 @@ def main():
     loop = np.array([r["loop_error_mm"]["mean"] for r in rows])
     print(f"Loop error over {len(rows)} subjects: median {np.median(loop):.2f} mm, "
           f"max {loop.max():.2f} mm")
+    save_accuracy_summary(OUT)
 
 
 if __name__ == "__main__":

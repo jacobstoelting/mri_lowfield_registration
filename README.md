@@ -12,7 +12,9 @@ lines them up automatically:
 Then it measures how well they line up, and shows the result in an interactive 3D viewer.
 It uses Python and SimpleITK, with a NiiVue page for the viewer.
 
-![Before and after overlay](results/overlay_before_after.png)
+![64 mT scan with the 3T outlines, before and after registration](results/overlay_before_after.png)
+
+*One of the 11 volunteers (`sub-0047`), chosen because its head sat 18 degrees and about 20 mm away from the 3T position, so the correction is easy to see. Accuracy for all of them is under [Results](#results).*
 
 ## Why line them up?
 
@@ -38,6 +40,8 @@ image: 3T T1.
 **Median error 1.15 mm by the stricter check (consistency loop), 0.67 mm by self-consistency.
 Both are smaller than one 64 mT voxel (1.6 x 1.6 x 5 mm).**
 
+![Registration error for all 11 volunteers](results/accuracy_summary.png)
+
 | Subject | Mutual information before → after | Self-consistency error, mean | Loop error, mean | Loop error, worst |
 |---|---|---|---|---|
 | sub-0011 | 0.148 → 0.401 | 0.67 mm | 2.67 mm | 4.90 mm |
@@ -53,7 +57,7 @@ Both are smaller than one 64 mT voxel (1.6 x 1.6 x 5 mm).**
 | sub-0066 | 0.176 → 0.384 | 0.30 mm | 1.78 mm | 3.09 mm |
 | **Median** | | **0.67 mm** | **1.15 mm** | |
 
-`sub-0035` is the one shown in the figure above; the viewer can show any of the 11. Every
+`sub-0047` is the one shown in the figure above; the viewer can show any of the 11. Every
 registration converged (the optimizer stopped because its steps had shrunk to nothing, not
 because it ran out of iterations).
 
@@ -214,7 +218,7 @@ Notes:
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python download_data.py      # 1.4 GB from Zenodo, unpacked to data/leiden/
-python register.py           # one subject (sub-0035), 20-30 seconds; writes results/
+python register.py           # one subject (sub-0047, the README figure); writes results/
 python smoke_test.py         # optional: checks sub-0035 still registers (MI up, error under 1.5 mm)
 python all_subjects.py       # 11 subjects x 3 64 mT scans, about an hour; skips finished ones (--all redoes them)
 python consistency_loop.py   # stricter accuracy check through the 3T T2, about 10 minutes
@@ -240,7 +244,7 @@ top of `register.py`.
 | `field_strength.py` | Additional check: registers the 3T low-res scans (64 mT voxel size) with the same pipeline |
 | `export_info.py` | Collects every results table into `docs/data/info.json` for the Results page |
 | `smoke_test.py` | Quick check after code changes: registers sub-0035 and fails if the result got worse |
-| `figures.py` | Before/after overlay, checkerboard and optimizer-progress figures |
+| `figures.py` | Before/after figure with the 3T outlines, checkerboard and optimizer-progress figures; `python figures.py` redraws the all-subjects accuracy chart |
 | `export_viewer.py` | Writes each subject's 3T scan, 3T outlines and three 64 mT scans to `docs/data/sub-XXXX/`, plus the subject list |
 | `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
 | `docs/info.html` | The Results page: all results tables |
