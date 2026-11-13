@@ -1,5 +1,7 @@
 # Aligning real 64 mT portable MRI to 3T brain scans
 
+[![tests](https://github.com/jacobstoelting/mri_lowfield_registration/actions/workflows/tests.yml/badge.svg)](https://github.com/jacobstoelting/mri_lowfield_registration/actions/workflows/tests.yml)
+
 **[Open the 3D viewer](https://jacobstoelting.github.io/mri_lowfield_registration/)** (runs in the browser, nothing to install)
 
 This project takes brain scans of the same person from two very different MRI scanners and
@@ -220,6 +222,7 @@ pip install -r requirements.txt
 python download_data.py      # 1.4 GB from Zenodo, unpacked to data/leiden/
 python register.py           # one subject (sub-0047, the README figure); writes results/
 python smoke_test.py         # optional: checks sub-0035 still registers (MI up, error under 1.5 mm)
+pip install pytest && pytest # optional: the test suite (see Tests below), about a minute
 python all_subjects.py       # 11 subjects x 3 64 mT scans, about an hour; skips finished ones (--all redoes them)
 python consistency_loop.py   # stricter accuracy check through the 3T T2, about 10 minutes
 python repeat_sessions.py    # repeat 64 mT sessions: head position and a second loop, about 25 minutes
@@ -231,6 +234,38 @@ python -m http.server -d docs 8000   # optional: preview the viewer at http://lo
 
 The subject and which 64 mT scan to use (`T2w`, `FLAIR` or `T1w`) are constants at the
 top of `register.py`.
+
+## Tests
+
+```bash
+pip install pytest
+pytest
+```
+
+The tests in `tests/` run on every push and pull request (GitHub Actions, badge at the top).
+CI can't download the real scans, so most tests use a small synthetic 3D "head" phantom
+(`tests/conftest.py`): a 64 x 64 x 64 volume with 2 mm voxels, an ellipsoid head with a bright
+blob, a darker blob and a dark CSF-like region placed off-center so rotations are visible,
+plus a little MRI-style noise. They check that:
+
+- **Registration recovers a known movement.** The phantom is rotated and shifted by a known
+  amount, and `register_best` finds that movement to within 1 mm.
+- **The two-start strategy keeps the better answer.** With `register` replaced by a stand-in
+  that returns a right answer from one starting guess and a wrong one from the other,
+  `register_best` keeps the one with the higher mutual information, either way round.
+- **The whole pipeline passes the smoke-test rule.** `run_pair` on a coarse, noisy phantom
+  (3 x 3 x 6 mm, like the 64 mT scan) and a fine one (2 mm, like the 3T scan): mutual
+  information goes up and the self-consistency error is under 1.5 mm.
+- **Preprocessing keeps the geometry.** `normalize` gives values in 0-1 and keeps origin,
+  spacing and orientation; `resample_spacing` gives the requested voxel size, keeps the
+  orientation and the volume's corner, and doesn't move the anatomy; `mask_background` zeroes
+  the air but keeps the whole head, including the dark CSF.
+- **Transforms are consistent.** A point moved by `euler(...)` and then by its inverse comes
+  back to within 1e-6 mm, and a transform written to a `.tfm` file reads back the same.
+
+`tests/test_smoke_real_data.py` also runs `smoke_test.py` on the real subject `sub-0035`. It
+is skipped automatically when the dataset isn't in `data/` (as on GitHub Actions); run
+`python download_data.py` first to include it.
 
 ## Files
 
@@ -244,6 +279,7 @@ top of `register.py`.
 | `field_strength.py` | Additional check: registers the 3T low-res scans (64 mT voxel size) with the same pipeline |
 | `export_info.py` | Collects every results table into `docs/data/info.json` for the Results page |
 | `smoke_test.py` | Quick check after code changes: registers sub-0035 and fails if the result got worse |
+| `tests/` | pytest suite: synthetic-phantom tests, plus the real-data smoke test when `data/` is present (see [Tests](#tests)) |
 | `figures.py` | Before/after figure with the 3T outlines, checkerboard and optimizer-progress figures; `python figures.py` redraws the all-subjects accuracy chart |
 | `export_viewer.py` | Writes each subject's 3T scan, 3T outlines and three 64 mT scans to `docs/data/sub-XXXX/`, plus the subject list |
 | `docs/index.html` | The NiiVue viewer (served by GitHub Pages) |
