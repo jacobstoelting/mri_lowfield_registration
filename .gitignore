@@ -6,3 +6,5 @@ __pycache__/
 HANDOFF*.md
 CLAUDE.md
 docs/agents/
+pytest-ci-prompt.md
+.pytest_cache/
